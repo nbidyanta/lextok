@@ -27,21 +27,24 @@ namespace CT {
     public:
       constexpr string_view() noexcept : str{nullptr}, sz{0} {}
       constexpr string_view(const char* cstr) noexcept : str(cstr), sz{strlen(cstr)} {}
+      constexpr string_view(const char* cstr, std::size_t count) noexcept : str{cstr}, sz{count} {}
       constexpr void remove_prefix(std::size_t n) noexcept { sz = n > sz ? 0 : sz - n; str += n; }
       constexpr void remove_suffix(std::size_t n) noexcept { sz = n > sz ? 0 : sz - n; }
       constexpr std::size_t size() const noexcept { return sz; }
       constexpr bool empty() const noexcept { return sz == 0; }
+      constexpr const char* data() noexcept { return str; }
       constexpr const char& operator[](std::size_t index) const noexcept { return str[index]; }
-      constexpr bool starts_with(const char* prefix) const noexcept
+
+      constexpr bool starts_with(const string_view& prefix) const noexcept
       {
-        auto prefix_len = strlen(prefix);
-        if (sz < prefix_len)
-          return 0;
-        for (std::size_t i = 0; i < prefix_len; i++)
+        if (prefix.size() > sz)
+          return false;
+        for (std::size_t i = 0; i < prefix.size(); i++)
           if (prefix[i] != str[i])
             return false;
         return true;
       }
+
   };
 
   template<class InputIt, class T>
@@ -53,6 +56,16 @@ namespace CT {
         if (*first == value)
           ret++;
       return ret;
+    }
+
+  template<class InputIt1, class InputIt2>
+    std::pair<InputIt1, InputIt2>
+    constexpr mismatch(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
+    {
+      while (first1 != last1 && first2 != last2 && *first1 == *first2) {
+        ++first1, ++first2;
+      }
+      return std::make_pair(first1, first2);
     }
 
   constexpr bool isalnum(std::uint16_t ch)
