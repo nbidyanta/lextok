@@ -1,45 +1,24 @@
 #include <iostream>
 
-#include <utility>
-#include <optional>
-
-#include "../inc/ct_lib.h"
+#include "../inc/tokenizer.h"
 
 using std::cout;
 
-constexpr CT::string_view input{"\r\n+CEREG: 1\r\n"};
+CT::string_view i0{"aBCd12434"};
 
-template <typename T>
-using token = std::optional<std::pair<T, CT::string_view>>;
-
-constexpr auto char_token(char c)
+std::ostream& operator<<(std::ostream& out, const CT::string_view& sv)
 {
-  return [=](CT::string_view input) -> token<char> {
-    if (input[0] != c)
-      return std::nullopt;
-    input.remove_prefix(1);
-    return {{c, input}};
-  };
-}
-
-constexpr auto str_token(CT::string_view str)
-{
-  return [=](CT::string_view input) -> token<CT::string_view> {
-    if (!input.starts_with(str))
-      return std::nullopt;
-    input.remove_prefix(str.size());
-    return {{str, input}};
-  };
+  for (const auto& c : sv)
+    out << c;
+  return out;
 }
 
 int main()
 {
-  constexpr auto t = str_token("\r+");
-  if (auto res = t(input);
-      !res) {
+  constexpr auto letters = Tok::many(Tok::alphabets());
+  if (auto token = letters(i0); token)
+    cout << "Found : " << (*token) << "\n";
+  else
     cout << "Not found\n";
-    return 1;
-  }
-  cout << "Found!\n";
   return 0;
 }

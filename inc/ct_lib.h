@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <algorithm>
 
 /**
  * Compile time library.
@@ -28,11 +29,18 @@ namespace CT {
       constexpr string_view() noexcept : str{nullptr}, sz{0} {}
       constexpr string_view(const char* cstr) noexcept : str(cstr), sz{strlen(cstr)} {}
       constexpr string_view(const char* cstr, std::size_t count) noexcept : str{cstr}, sz{count} {}
+      constexpr string_view(const string_view& sv, std::size_t count) noexcept :
+        str{sv.data()}, sz{std::min(count, sv.size())} {}
+      constexpr string_view(const string_view& sv) noexcept : str{sv.data()}, sz{sv.size()} {}
       constexpr void remove_prefix(std::size_t n) noexcept { sz = n > sz ? 0 : sz - n; str += n; }
       constexpr void remove_suffix(std::size_t n) noexcept { sz = n > sz ? 0 : sz - n; }
+      constexpr const char* begin() const noexcept { return str; }
+      constexpr const char* end() const noexcept { return str + sz; }
+      constexpr const char* cbegin() const noexcept { return str; }
+      constexpr const char* cend() const noexcept { return str + sz; }
       constexpr std::size_t size() const noexcept { return sz; }
       constexpr bool empty() const noexcept { return sz == 0; }
-      constexpr const char* data() noexcept { return str; }
+      constexpr const char* data() const noexcept { return str; }
       constexpr const char& operator[](std::size_t index) const noexcept { return str[index]; }
 
       constexpr bool starts_with(const string_view& prefix) const noexcept
