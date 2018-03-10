@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(LexTok VERSION 0.1.0 LANGUAGES CXX DESCRIPTION "A lexical tokenization header-only library")
+set(CMAKE_CXX_STANDARD 17)
+
 find_package(Doxygen REQUIRED dot)
 
 option(BUILD_LEXTOK_DOCS "Generate HTML documentation for the Lexical Tokenizer (requires Doxygen and dot)" OFF)
+option(ENABLE_LEXTOK_TESTS "Run tests to verify the LexTok library" OFF)
 
 if (BUILD_LEXTOK_DOCS)
 	if (NOT DOXYGEN_FOUND)
@@ -18,13 +21,13 @@ if (BUILD_LEXTOK_DOCS)
 	set(DOXYGEN_DOCSET_PUBLISHER_ID org.nbidyanta.doxygen)
 	set(DOXYGEN_DOCSET_PUBLISHER_NAME Nilangshu)
 	set(DOXYGEN_GENERATE_TREEVIEW YES)
-	doxygen_add_docs(lextok-docs inc/ COMMENT "Generate Doxygen HTML documentation for the Lexical Tokenizer")
+	doxygen_add_docs(lextok-docs lib/ COMMENT "Generate Doxygen HTML documentation for the Lexical Tokenizer")
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+add_library(lextok INTERFACE)
+target_include_directories(lextok INTERFACE lib)
 
-add_executable(lextok ${CMAKE_SOURCE_DIR}/src/main.cpp)
-
-target_include_directories(lextok PRIVATE ${CMAKE_SOURCE_DIR}/inc)
-
-set(CMAKE_CXX_FLAGS "-Wall -Werror -Wconversion -fno-rtti -fno-exceptions")
+if (ENABLE_LEXTOK_TESTS)
+	enable_testing()
+	add_subdirectory(tests)
+endif()

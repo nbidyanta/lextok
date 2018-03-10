@@ -1,10 +1,19 @@
+/**
+ * @file lextok.h
+ * @brief A lexical tokenization library that can potentially be run at compile time.
+ * @details This library provides a toolkit for building tokenizers. The tokenizers
+ * work on `string_view`s as input. For the time being, a custom implementation,
+ * `CT::string_view`, is being used. In the future, this will be replaced by `std::string_view`.
+ * Inspiration for this library was drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/)
+ * and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY).
+ */
 #ifndef _LEXTOK_H
 #define _LEXTOK_H
 
 #include <utility>
 #include <optional>
 
-#include "../inc/ct_lib.h"
+#include "ct_lib.h"    // XXX: Only needed until std::string_view is constexpr enabled.
 
 namespace Tok {
 

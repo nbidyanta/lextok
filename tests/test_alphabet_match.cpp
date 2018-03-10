@@ -1,17 +1,6 @@
-#include <iostream>
-
-#include "../inc/lextok.h"
-
-using std::cout;
+#include "common.h"
 
 constexpr CT::string_view i0{"aBCd12434"};
-
-std::ostream& operator<<(std::ostream& out, const CT::string_view& sv)
-{
-  for (const auto& c : sv)
-    out << c;
-  return out;
-}
 
 constexpr auto lex(const CT::string_view& sv)
 {
