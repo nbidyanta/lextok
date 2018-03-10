@@ -1,5 +1,5 @@
-#ifndef _TOKENIZER_H
-#define _TOKENIZER_H
+#ifndef _LEXTOK_H
+#define _LEXTOK_H
 
 #include <utility>
 #include <optional>
@@ -11,14 +11,16 @@ namespace Tok {
   using Input = CT::string_view;
   using Token = std::optional<CT::string_view>;
 
-  constexpr void validate(CT::string_view token) {}
+  namespace Mod {
+    constexpr void none(CT::string_view token) {}
+  }
 
-  namespace detail {
-    template<typename Acceptor_Predicate, typename Func>
-      constexpr auto single_char_tokenizer(Acceptor_Predicate&& pred, Func&& func) noexcept
+  namespace impl {
+    template<typename Acceptor_Predicate, typename Modifier>
+      constexpr auto single_char_tokenizer(Acceptor_Predicate&& pred, Modifier&& func) noexcept
       {
         return [p = std::forward<Acceptor_Predicate>(pred),
-        func = std::forward<Func>(func)](Input& input) -> Token {
+        func = std::forward<Modifier>(func)](Input& input) -> Token {
           char c = input[0];
           if (p(c)) {
             const CT::string_view token{input, 1};
@@ -32,75 +34,87 @@ namespace Tok {
   }
 
   // Create tokenizer that accepts lower and upper case alphabets.
-  template<typename Func = decltype(validate)>
-    constexpr auto alphabets(Func&& func = validate) noexcept
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto alphabets(Modifier&& func = Mod::none) noexcept
     {
-      return detail::single_char_tokenizer(
-          [func = std::forward<Func>(func)](char c) -> bool {
+      return impl::single_char_tokenizer(
+          [func = std::forward<Modifier>(func)](char c) -> bool {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
           }, func);
     }
 
   // Create a tokenizer that accepts only lower case alphabets.
-  template<typename Func = decltype(validate)>
-    constexpr auto lower_alphabets(Func&& func = validate) noexcept
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto lower_alphabets(Modifier&& func = Mod::none) noexcept
     {
-      return detail::single_char_tokenizer(
+      return impl::single_char_tokenizer(
           [](char c) -> bool {
             return c >= 'a' && c <= 'z';
           }, func);
     }
 
   // Create a tokenizer that accepts only upper case alphabets.
-  template<typename Func = decltype(validate)>
-    constexpr auto upper_alphabets(Func&& func = validate) noexcept
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto upper_alphabets(Modifier&& func = Mod::none) noexcept
     {
-      return detail::single_char_tokenizer(
+      return impl::single_char_tokenizer(
           [](char c) -> bool {
             return c >= 'A' && c <= 'Z';
           }, func);
     }
 
   // Create a tokenizer that accepts only decimal digits.
-  template<typename Func = decltype(validate)>
-    constexpr auto decimal_digits(Func&& func = validate) noexcept
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto decimal_digits(Modifier&& func = Mod::none) noexcept
     {
-      return detail::single_char_tokenizer(
+      return impl::single_char_tokenizer(
           [](char c) -> bool {
             return c >= '0' && c <= '9';
           }, func);
     }
 
   // Create a tokenizer that accepts only hexadecimal digits.
-  template<typename Func = decltype(validate)>
-    constexpr auto hex_digits(Func&& func = validate) noexcept
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto hex_digits(Modifier&& func = Mod::none) noexcept
     {
-      return detail::single_char_tokenizer(
+      return impl::single_char_tokenizer(
           [](char c) -> bool {
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
           }, func);
     }
 
-  // Create a tokenizer to match a character 'c'.
-  template<typename Func = decltype(validate)>
-    constexpr auto char_token(char c, Func&& func = validate) noexcept
+  // Create a tokenizer that accepts whitespace.
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto whitespace(Modifier&& func = Mod::none) noexcept
     {
-      return detail::single_char_tokenizer(
-          [c = c, func = std::forward<Func>(func)](char ch) -> bool {
+      return impl::single_char_tokenizer(
+          [](char c) -> bool {
+            return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+          }, func);
+    }
+
+  // Create a tokenizer to match a character 'c'.
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto char_token(char c, Modifier&& func = Mod::none) noexcept
+    {
+      return impl::single_char_tokenizer(
+          [c, func = std::forward<Modifier>(func)](char ch) -> bool {
             return c == ch;
           }, func);
     }
 
   // Create a tokenizer to match a literal string pointed to by 'str'.
-  constexpr auto str_token(CT::string_view str) noexcept
-  {
-    return [=](Input& input) -> Token {
-      if (!input.starts_with(str))
-        return {};
-      input.remove_prefix(str.size());
-      return {str};
-    };
-  }
+  template<typename Modifier = decltype(Mod::none)>
+    constexpr auto str_token(CT::string_view str, Modifier&& func = Mod::none) noexcept
+    {
+      return [=, func = std::forward<Modifier>(func)](Input& input) -> Token {
+        if (!input.starts_with(str))
+          return {};
+        input.remove_prefix(str.size());
+        func(str);
+        return {str};
+      };
+    }
 
   // Create a tokenizer that matches a single character out of the group of characters provided.
   constexpr auto any_char_of(CT::string_view char_group) noexcept
@@ -127,13 +141,7 @@ namespace Tok {
     };
   }
 
-  template<typename Transform>
-    constexpr auto map_token(Token&& token, Transform&& transform) noexcept
-    {
-      return transform(std::forward<Token>(token));
-    }
-
-  namespace detail {
+  namespace impl {
     template<typename Tokenizer>
       constexpr std::size_t accumulate(Tokenizer&& tokenizer, Input input) noexcept
       {
@@ -153,7 +161,7 @@ namespace Tok {
     constexpr auto many(Tokenizer&& tokenizer) noexcept
     {
       return [t = std::forward<Tokenizer>(tokenizer)](Input& input) -> Token {
-        const auto token_size = detail::accumulate(t, input);
+        const auto token_size = impl::accumulate(t, input);
         return {{input, token_size}};
       };
     }
@@ -167,7 +175,7 @@ namespace Tok {
         const auto first_token = t(input);
         if (!first_token)
           return {};
-        std::size_t token_size = (*first_token).size() + detail::accumulate(t, input);
+        std::size_t token_size = (*first_token).size() + impl::accumulate(t, input);
         return {{input_tokenize, token_size}};
       };
     }
