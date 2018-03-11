@@ -134,9 +134,9 @@ namespace CT {
 
       /**
        * @brief Verify if the `string_view` starts with a given prefix.
-       * @param[in] prefix Constant reference to the view.
-       * @retval true String was found.
-       * @retval false String was not found.
+       * @param[in] prefix Constant reference to a view holding the prefix.
+       * @retval true Prefix was found.
+       * @retval false Prefix was not found.
        */
       constexpr bool starts_with(const string_view& prefix) const noexcept
       {
@@ -148,6 +148,37 @@ namespace CT {
         return true;
       }
 
+      /**
+       * @brief Verify if the `string_view` starts with a given prefix.
+       * @param[in] prefix Character prefix to look for.
+       * @retval true Prefix was found.
+       * @retval false Prefix was not found.
+       */
+      constexpr bool starts_with(char prefix) const noexcept
+      {
+        if (sz == 0)
+          return false;
+        if (c == str[0])
+          return true;
+        return false;
+      }
+
+      /**
+       * @brief Verify if the `string_view` starts with a given prefix.
+       * @param[in] prefix NULL terminated prefix to look for.
+       * @retval true Prefix was found.
+       * @retval false Prefix was not found.
+       */
+      constexpr bool starts_with(const char* prefix) const noexcept
+      {
+        auto prefix_size = strlen(prefix);
+        if (prefix_size > sz)
+          return false;
+        for (std::size_t i = 0; i < prefix_size; i++)
+          if (prefix[i] != str[i])
+            return false;
+        return true;
+      }
   };
 
 }
