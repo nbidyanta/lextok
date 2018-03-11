@@ -1,18 +1,21 @@
 /**
  * @file ct_lib.h
+ * @author Nilangshu Bidyanta
+ * @copyright (c) 2018 Nilangshu Bidyanta. MIT License.
  * @brief Compile Time LIBrary substitute
  * @details This is a compile time support library needed by the tokenization library.
  * All of the functionality contained here can be replaced with the standard C++17 library.
  * However, as of g++ 7.2, these are **not** marked `constexpr` in the standard library
  * and thus cannot be used at compile time.
  */
-#ifndef _CT_LIB_H
-#define _CT_LIB_H
+#ifndef CT_LIB_H
+#define CT_LIB_H
 
 #include <cstddef>
 #include <iterator>
 #include <algorithm>
 
+/// Main namespace for the Compile Time library
 namespace CT {
 
   /**
