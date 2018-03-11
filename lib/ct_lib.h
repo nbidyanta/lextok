@@ -158,7 +158,7 @@ namespace CT {
       {
         if (sz == 0)
           return false;
-        if (c == str[0])
+        if (prefix == str[0])
           return true;
         return false;
       }

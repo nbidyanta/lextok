@@ -45,6 +45,8 @@ namespace Tok {
       {
         return [p = std::forward<Acceptor_Predicate>(pred),
         func = std::forward<Map>(func)](Input& input) -> Token {
+          if (input.size() == 0)
+            return {};
           char c = input[0];
           if (p(c)) {
             const CT::string_view token{input, 1};
@@ -200,8 +202,8 @@ namespace Tok {
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         if (!input.starts_with(str))
           return {};
-        input.remove_prefix(str.size());
         func(str);
+        input.remove_prefix(str.size());
         return {str};
       };
     }
@@ -218,7 +220,7 @@ namespace Tok {
     {
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         for (const auto& c : char_group)
-          if (c == input[0]) {
+          if (input.starts_with(c)) {
             const CT::string_view token{input, 1};
             func(token);
             input.remove_prefix(1);
@@ -240,7 +242,7 @@ namespace Tok {
     {
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         for (const auto& c : char_group)
-          if (c == input[0])
+          if (input.starts_with(c))
             return {};
         const CT::string_view token{input, 1};
         func(token);
