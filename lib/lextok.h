@@ -73,7 +73,7 @@ namespace Tok {
    * @returns A lambda that matches an alphabet [a-zA-Z] as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto alphabets(Map&& func = mapper::none) noexcept
+    constexpr auto alphabet(Map&& func = mapper::none) noexcept
     {
       return impl::single_char_tokenizer(
           [func = std::forward<Map>(func)](char c) -> bool {
@@ -88,7 +88,7 @@ namespace Tok {
    * @returns A lambda that matches a lower case alphabet [a-z] as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto lower_alphabets(Map&& func = mapper::none) noexcept
+    constexpr auto lower_alphabet(Map&& func = mapper::none) noexcept
     {
       return impl::single_char_tokenizer(
           [](char c) -> bool {
@@ -103,7 +103,7 @@ namespace Tok {
    * @returns A lambda that matches an upper case alphabet [A-Z] as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto upper_alphabets(Map&& func = mapper::none) noexcept
+    constexpr auto upper_alphabet(Map&& func = mapper::none) noexcept
     {
       return impl::single_char_tokenizer(
           [](char c) -> bool {
@@ -118,7 +118,7 @@ namespace Tok {
    * @returns A lambda that matches a decimal digit [0-9] as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto decimal_digits(Map&& func = mapper::none) noexcept
+    constexpr auto decimal_digit(Map&& func = mapper::none) noexcept
     {
       return impl::single_char_tokenizer(
           [](char c) -> bool {
@@ -133,7 +133,7 @@ namespace Tok {
    * @returns A lambda that matches a hexadecimal digit [a-fA-F0-9] as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto hex_digits(Map&& func = mapper::none) noexcept
+    constexpr auto hex_digit(Map&& func = mapper::none) noexcept
     {
       return impl::single_char_tokenizer(
           [](char c) -> bool {

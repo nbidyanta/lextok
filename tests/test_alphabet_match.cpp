@@ -6,7 +6,7 @@ constexpr auto lex(const CT::string_view& sv)
 {
   std::size_t sz = 0;
   auto i = sv;
-  const auto letters = Tok::many(Tok::alphabets([&sz](CT::string_view token){ sz++; }));
+  const auto letters = Tok::many(Tok::alphabet([&sz](CT::string_view token){ sz++; }));
   const auto token = letters(i);
   return token;
 }
