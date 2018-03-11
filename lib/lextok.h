@@ -47,8 +47,7 @@ namespace Tok {
         func = std::forward<Map>(func)](Input& input) -> Token {
           if (input.size() == 0)
             return {};
-          char c = input[0];
-          if (p(c)) {
+          if (p(input[0])) {
             const CT::string_view token{input, 1};
             func(token);
             input.remove_prefix(1);
@@ -309,12 +308,14 @@ namespace Tok {
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
                const auto first_token = t(input);
-               if (!first_token)
+               if (!first_token) {
+                 input = input_tokenize;
                  return {};
-               std::size_t token_size = (*first_token).size() + impl::accumulation_size(t, input);
-               const CT::string_view token{input_tokenize, token_size};
+               }
+               std::size_t token_size_trailing = impl::accumulation_size(t, input);
+               const CT::string_view token{input_tokenize, token_size_trailing + (*first_token).size()};
                func(token);
-               input.remove_prefix(token_size);
+               input.remove_prefix(token_size_trailing);
                return {token};
              };
     }
@@ -364,15 +365,18 @@ namespace Tok {
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
                const auto first_token = tl(input);
-               if (!first_token)
+               if (!first_token) {
+                 input = input_tokenize;
                  return {};
+               }
                const auto second_token = tr(input);
-               if (!second_token)
+               if (!second_token) {
+                 input = input_tokenize;
                  return {};
+               }
                const auto token_size = (*first_token).size() + (*second_token).size();
                const CT::string_view token{input_tokenize, token_size};
                func(token);
-               input.remove_prefix(token_size);
                return {token};
              };
     }
@@ -392,15 +396,9 @@ namespace Tok {
     {
       return [tl = std::forward<TokenizerL>(tl),
              tr = std::forward<TokenizerR>(tr)](Input& input) -> Token {
-               if (const auto first_token = tl(input); first_token) {
-                 const auto token_size = (*first_token).size();
-                 return {{input, token_size}};
-               }
-               if (const auto second_token = tr(input); second_token) {
-                 const auto token_size = (*second_token).size();
-                 return {{input, token_size}};
-               }
-               return {};
+               if (const auto first_token = tl(input); first_token)
+                 return first_token;
+               return tr(input);
              };
     }
 
