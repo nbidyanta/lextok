@@ -3,9 +3,9 @@
 
 #include <iostream>
 #include <algorithm>
-#include "lextok.h"
+#include <string>
 
-using std::cout;
+#include "lextok.h"
 
 namespace CT {
 
@@ -27,6 +27,5 @@ namespace CT {
   }
 
 }
-
 
 #endif
