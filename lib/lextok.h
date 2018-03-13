@@ -463,27 +463,27 @@ namespace Tok {
              };
     }
 
-  /**
-   * @brief Create a tokenizer that chooses a successful match between two tokenizers.
-   * @details If both tokenizers fail, this tokenizer also fails.
-   * @tparam TokenizerL A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam TokenizerR A callable type `Tok::Token (Tok::Input& input)`.
-   * @param[in] tl A callable object of type `TokenizerL`. This is the first option to try.
-   * @param[in] tr A callable object of type `TokenizerR`. This is the second option to try.
-   * @returns A lambda that chooses the tokenizer that succeeds. In case all options fail,
-   * the overall tokenizer also fails.
-   */
-  template<typename TokenizerL, typename TokenizerR>
-    constexpr auto operator|(TokenizerL&& tl, TokenizerR&& tr) noexcept
-    {
-      return [tl = std::forward<TokenizerL>(tl),
-             tr = std::forward<TokenizerR>(tr)](Input& input) -> Token {
-               if (const auto first_token = tl(input); first_token)
-                 return first_token;
-               return tr(input);
-             };
-    }
+}
 
+/**
+ * @brief Create a tokenizer that chooses a successful match between two tokenizers.
+ * @details If both tokenizers fail, this tokenizer also fails.
+ * @tparam TokenizerL A callable type `Tok::Token (Tok::Input& input)`.
+ * @tparam TokenizerR A callable type `Tok::Token (Tok::Input& input)`.
+ * @param[in] tl A callable object of type `TokenizerL`. This is the first option to try.
+ * @param[in] tr A callable object of type `TokenizerR`. This is the second option to try.
+ * @returns A lambda that chooses the tokenizer that succeeds. In case all options fail,
+ * the overall tokenizer also fails.
+ */
+template<typename TokenizerL, typename TokenizerR>
+constexpr auto operator|(TokenizerL&& tl, TokenizerR&& tr) noexcept
+{
+  return [tl = std::forward<TokenizerL>(tl),
+         tr = std::forward<TokenizerR>(tr)](Tok::Input& input) -> Tok::Token {
+           if (const auto first_token = tl(input); first_token)
+             return first_token;
+           return tr(input);
+         };
 }
 
 #endif
