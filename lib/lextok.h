@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <optional>
+#include <tuple>
 
 #include "ct_lib.h"    // XXX: Only needed until std::string_view is constexpr enabled.
 
@@ -119,7 +120,7 @@ namespace Tok {
    * @returns A lambda that matches a decimal digit [0-9] as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto decimal_digit(Map&& func = mapper::none) noexcept
+    constexpr auto digit(Map&& func = mapper::none) noexcept
     {
       return impl::single_char_tokenizer(
           [](char c) -> bool {
@@ -169,6 +170,21 @@ namespace Tok {
       return impl::single_char_tokenizer(
           [](char c) -> bool {
             return true;
+          }, func);
+    }
+
+  /**
+   * @brief Create a tokenizer that matches a newline character.
+   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @param[in] func A callable object of type `Map`.
+   * @returns A lambda that matches a newline character [\\r\\n] as a token.
+   */
+  template<typename Map = decltype(mapper::none)>
+    constexpr auto newline(Map&& func = mapper::none) noexcept
+    {
+      return impl::single_char_tokenizer(
+          [](char c) -> bool {
+            return c == '\r' || c == '\n';
           }, func);
     }
 
@@ -283,12 +299,42 @@ namespace Tok {
   template<typename Tokenizer, typename Map = decltype(mapper::none)>
     constexpr auto many(Tokenizer&& tokenizer, Map&& func = mapper::none) noexcept
     {
-      return [t = std::forward<Tokenizer>(tokenizer),
+      return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
-               const auto token_size = impl::accumulation_size(t, input);
+               const auto token_size = impl::accumulation_size(tokenizer, input);
                const CT::string_view token{input, token_size};
                func(token);
                input.remove_prefix(token_size);
+               return {token};
+             };
+    }
+
+  /**
+   * @brief Create a tokenizer that matches an exact number number of instances of another tokenizer.
+   * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
+   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @param[in] tokenizer A callable object of type `Tokenizer`.
+   * @param[in] n The number of times the token needs to be matched.
+   * @param[in] func A callable object of type `Map`.
+   * @returns A lambda that matches a target tokenizer an exact number of times.
+   */
+  template<typename Tokenizer, typename Map = decltype(mapper::none)>
+    constexpr auto exactly(Tokenizer&& tokenizer, std::size_t n, Map&& func = mapper::none) noexcept
+    {
+      return [=, tokenizer = std::forward<Tokenizer>(tokenizer),
+             func = std::forward<Map>(func)](Input& input) -> Token {
+               const auto input_tokenize = input;
+               std::size_t token_size = 0;
+               for (std::size_t i = 0; i < n; i++) {
+                 auto token = tokenizer(input);
+                 if (!token) {
+                   input = input_tokenize;
+                   return {};
+                 }
+                 token_size += (*token).size();
+               }
+               const CT::string_view token{input_tokenize, token_size};
+               func(token);
                return {token};
              };
     }
@@ -304,15 +350,15 @@ namespace Tok {
   template<typename Tokenizer, typename Map = decltype(mapper::none)>
     constexpr auto at_least_one(Tokenizer&& tokenizer, Map&& func = mapper::none) noexcept
     {
-      return [t = std::forward<Tokenizer>(tokenizer),
+      return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
-               const auto first_token = t(input);
+               const auto first_token = tokenizer(input);
                if (!first_token) {
                  input = input_tokenize;
                  return {};
                }
-               std::size_t token_size_trailing = impl::accumulation_size(t, input);
+               std::size_t token_size_trailing = impl::accumulation_size(tokenizer, input);
                const CT::string_view token{input_tokenize, token_size_trailing + (*first_token).size()};
                func(token);
                input.remove_prefix(token_size_trailing);
@@ -332,51 +378,87 @@ namespace Tok {
   template<typename Tokenizer, typename Map = decltype(mapper::none)>
     constexpr auto maybe(Tokenizer&& tokenizer, Map&& func = mapper::none) noexcept
     {
-      return [t = std::forward<Tokenizer>(tokenizer),
+      return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
-               const auto token = t(input);
+               const auto token = tokenizer(input);
                if (!token) {
                  func({});
-                 return {{}};
+                 return {CT::string_view{}};
                }
                func(*token);
-               std::size_t token_size = (*token).size();
-               input.remove_prefix(token_size);
                return token;
              };
     }
 
+  namespace impl {
+    /**
+     * @brief Apply a tuple of tokenizers to the input.
+     * @tparam N Number of tokenizers.
+     * @tparam Tuple A type representing the tuple of callable types `Tok::Token (Tok::Input& input)`.
+     * @tparam I A sequence of integers used to unpack the tokenizers from the tuple.
+     * @param[in] tokenizer A tuple of tokenizers of types `Tokenizers`.
+     * @param[in] input Reference to an `Input`.
+     * @param[in] s A sequence of unsigned integers in increasing order.
+     * @returns A token natched by a series of tokenizers.
+     */
+    template<std::size_t N, typename Tuple, std::size_t... I>
+      constexpr Token apply_tokenizers(Tuple&& tokenizer, Input& input, std::index_sequence<I...> s) noexcept
+      {
+        const auto input_tokenize = input;
+        std::size_t token_size = 0;
+        const Token tokens[N] = {std::get<I>(tokenizer)(input)...};
+        for (std::size_t i = 0; i < N; i++) {
+          if (!tokens[i]) {
+            input = input_tokenize;
+            return {};
+          }
+          token_size += (*tokens[i]).size();
+        }
+        return {{input_tokenize, token_size}};
+      }
+  }
+
   /**
-   * @brief Create a tokenizer that accepts matches of two tokenizers in sequence.
-   * @details Both tokenizers must succeed for a successful match. `func` is called on the final matched token.
-   * @tparam TokenizerL A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam TokenizerR A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
-   * @param[in] tl A callable object of type `TokenizerL`. This is the first option to try.
-   * @param[in] tr A callable object of type `TokenizerR`. This is the second option to try.
-   * @param[in] func A callable object of type `Map`.
-   * @returns A lambda that accepts an ordered sequence of matches by two tokenizers.
+   * @brief Create a tokenizer that accepts matches of multiple tokenizers in sequence.
+   * @details All tokenizers must succeed for a successful match.
+   * @tparam Tokenizers A pack callable types `Tok::Token (Tok::Input& input)`.
+   * @param[in] tokenizers A pack of callable objects of the types listed in `Tokenizers`.
+   * @returns A lambda that accepts an ordered sequence of matches by multiple tokenizers.
    */
-  template<typename TokenizerL, typename TokenizerR, typename Map = decltype(mapper::none)>
-    constexpr auto sequence(TokenizerL&& tl, TokenizerR&& tr, Map&& func = mapper::none) noexcept
+  template<typename... Tokenizers>
+    constexpr auto sequence(Tokenizers&&... tokenizers) noexcept
     {
-      return [tl = std::forward<TokenizerL>(tl),
-             tr = std::forward<TokenizerR>(tr),
+      return [tokenizer_tuple = std::make_tuple(std::forward<Tokenizers>(tokenizers)...)](Input& input) -> Token {
+        constexpr auto num_tokenizers = std::tuple_size_v<decltype(tokenizer_tuple)>;
+        return impl::apply_tokenizers<num_tokenizers>(
+            tokenizer_tuple,
+            input,
+            std::make_index_sequence<num_tokenizers>{}
+          );
+      };
+    }
+
+  /**
+   * @brief Apply a callable object to the output of a sequence tokenizer.
+   * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
+   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @param[in] seq A sequence tokenizer (returned by Tok::sequence).
+   * @param[in] func A callable object of type `Map`.
+   * @returns A lambda that accepts an ordered sequence of matches by two tokenizers and
+   * applies a callable object to the result.
+   */
+  template<typename Tokenizer, typename Map>
+    constexpr auto map_seq(Tokenizer&& seq, Map&& func) noexcept
+    {
+      return [seq = std::forward<Tokenizer>(seq),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
-               const auto first_token = tl(input);
-               if (!first_token) {
+               const auto token = seq(input);
+               if (!token) {
                  input = input_tokenize;
                  return {};
                }
-               const auto second_token = tr(input);
-               if (!second_token) {
-                 input = input_tokenize;
-                 return {};
-               }
-               const auto token_size = (*first_token).size() + (*second_token).size();
-               const CT::string_view token{input_tokenize, token_size};
-               func(token);
+               func(*token);
                return {token};
              };
     }
