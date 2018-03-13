@@ -24,23 +24,23 @@ static std::string get_string(const CT::string_view& sv)
 static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests] = {
 
   [](CT::string_view& input) -> bool {
-    const auto token = Tok::decimal_digit()(input);
+    const auto token = Tok::digit()(input);
     return (!token) ? true : false;
   },
 
   [](CT::string_view& input) -> bool {
-    const auto token = Tok::decimal_digit()(input);
+    const auto token = Tok::digit()(input);
     return (!token) ? true : false;
   },
 
   [](CT::string_view& input) -> bool {
-    const auto token = Tok::decimal_digit()(input);
+    const auto token = Tok::digit()(input);
     return token && *token == "9";
   },
 
   [](CT::string_view& input) -> bool {
     std::size_t sz = 0;
-    const auto token = Tok::many(Tok::decimal_digit([&sz](CT::string_view){ sz++; }))(input);
+    const auto token = Tok::many(Tok::digit([&sz](CT::string_view){ sz++; }))(input);
     return token && *token == "1234567890" && sz == CT::strlen("1234567890");
   },
 
@@ -50,7 +50,7 @@ static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests]
     const auto token = Tok::sequence(
         Tok::at_least_one(Tok::upper_alphabet(), [&airline_name](CT::string_view token) {
           airline_name = get_string(token);
-        }), Tok::at_least_one(Tok::decimal_digit(), [&flight_number](CT::string_view token) {
+        }), Tok::at_least_one(Tok::digit(), [&flight_number](CT::string_view token) {
           flight_number = static_cast<std::uint16_t>(std::stoul(token.data()));
         }))(input);
     return token && *token == "AA535" && airline_name == "AA" && flight_number == 535;
