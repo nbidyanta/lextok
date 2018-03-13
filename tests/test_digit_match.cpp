@@ -8,7 +8,8 @@ static CT::string_view input[] = {
   {"Text"},                   // Mismatch
   {"9"},                      // Regular match
   {"1234567890"},             // Count number of tokens matched
-  {"AA535"}                   // Airline code
+  {"AA535"},                  // Airline code
+  {"0xA22b3a"}                // Hexadecimal digits
 };
 
 static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(CT::string_view);
@@ -55,6 +56,19 @@ static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests]
         }))(input);
     return token && *token == "AA535" && airline_name == "AA" && flight_number == 535;
   },
+
+  [](CT::string_view& input) -> bool {
+    std::uint32_t hex_data = 0;
+    const auto token = Tok::sequence(
+        Tok::str_token("0x"),
+        Tok::at_least_one(Tok::hex_digit([&hex_data](CT::string_view token) {
+            hex_data *= 16;
+            hex_data += (token[0] >= 'a' ?
+                token[0] - 'a' + 10 : token[0] >= 'A' ?
+                token[0] - 'A' + 10 : token[0] - '0');
+        })))(input);
+    return token && hex_data == 0xA22B3A;
+  }
 
 };
 

@@ -14,8 +14,8 @@ add_test(lower_alphabet_match test_lower_alphabet_match)
 add_test_exec(test_upper_alphabet_match)
 add_test(upper_alphabet_match test_upper_alphabet_match)
 
-add_test_exec(test_decimal_digit_match)
-add_test(decimal_digit_match test_decimal_digit_match)
+add_test_exec(test_digit_match)
+add_test(digit_match test_digit_match)
 
 add_test_exec(test_real_world_match)
 add_test(real_world_match test_real_world_match)
