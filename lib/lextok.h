@@ -18,6 +18,7 @@
 #include <utility>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 
 #include "ct_lib.h"    // XXX: Only needed until std::string_view is constexpr enabled.
 
@@ -44,6 +45,10 @@ namespace Tok {
     template<typename Acceptor_Predicate, typename Map>
       constexpr auto single_char_tokenizer(Acceptor_Predicate&& pred, Map&& func) noexcept
       {
+        static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+            "Map must be a callable type 'void (CT::string_view)'");
+        static_assert(std::is_invocable_r_v<bool, Acceptor_Predicate, char>,
+            "Acceptor_Predicate must be a callable type 'bool (char c)'");
         return [p = std::forward<Acceptor_Predicate>(pred),
         func = std::forward<Map>(func)](Input& input) -> Token {
           if (input.size() == 0)
@@ -214,6 +219,8 @@ namespace Tok {
   template<typename Map = decltype(mapper::none)>
     constexpr auto str_token(CT::string_view str, Map&& func = mapper::none) noexcept
     {
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         if (!input.starts_with(str))
           return {};
@@ -233,6 +240,8 @@ namespace Tok {
   template<typename Map = decltype(mapper::none)>
     constexpr auto any_char_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
     {
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         for (const auto& c : char_group)
           if (input.starts_with(c)) {
@@ -255,6 +264,8 @@ namespace Tok {
   template<typename Map = decltype(mapper::none)>
     constexpr auto none_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
     {
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         for (const auto& c : char_group)
           if (input.starts_with(c))
@@ -299,6 +310,10 @@ namespace Tok {
   template<typename Tokenizer, typename Map = decltype(mapper::none)>
     constexpr auto many(Tokenizer&& tokenizer, Map&& func = mapper::none) noexcept
     {
+      static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
+          "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto token_size = impl::accumulation_size(tokenizer, input);
@@ -321,6 +336,10 @@ namespace Tok {
   template<typename Tokenizer, typename Map = decltype(mapper::none)>
     constexpr auto exactly(Tokenizer&& tokenizer, std::size_t n, Map&& func = mapper::none) noexcept
     {
+      static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
+          "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [=, tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
@@ -350,6 +369,10 @@ namespace Tok {
   template<typename Tokenizer, typename Map = decltype(mapper::none)>
     constexpr auto at_least_one(Tokenizer&& tokenizer, Map&& func = mapper::none) noexcept
     {
+      static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
+          "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
@@ -378,6 +401,10 @@ namespace Tok {
   template<typename Tokenizer, typename Map = decltype(mapper::none)>
     constexpr auto maybe(Tokenizer&& tokenizer, Map&& func = mapper::none) noexcept
     {
+      static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
+          "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto token = tokenizer(input);
@@ -428,6 +455,8 @@ namespace Tok {
   template<typename... Tokenizers>
     constexpr auto sequence(Tokenizers&&... tokenizers) noexcept
     {
+      static_assert((std::is_invocable_r_v<Tok::Token, Tokenizers, Tok::Input&> && ...),
+          "All Tokenizers must be a callable type 'Tok::Token (Tok::Input&)'");
       return [tokenizer_tuple = std::make_tuple(std::forward<Tokenizers>(tokenizers)...)](Input& input) -> Token {
         constexpr auto num_tokenizers = std::tuple_size_v<decltype(tokenizer_tuple)>;
         return impl::apply_tokenizers<num_tokenizers>(
@@ -450,6 +479,10 @@ namespace Tok {
   template<typename Tokenizer, typename Map>
     constexpr auto map_seq(Tokenizer&& seq, Map&& func) noexcept
     {
+      static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
+          "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
+      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
+          "Map must be a callable type 'void (CT::string_view)'");
       return [seq = std::forward<Tokenizer>(seq),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
@@ -478,6 +511,10 @@ namespace Tok {
 template<typename TokenizerL, typename TokenizerR>
 constexpr auto operator|(TokenizerL&& tl, TokenizerR&& tr) noexcept
 {
+  static_assert(std::is_invocable_r_v<Tok::Token, TokenizerL, Tok::Input&>,
+      "TokenizerL must be a callable type 'Tok::Token (Tok::Input&)'");
+  static_assert(std::is_invocable_r_v<Tok::Token, TokenizerR, Tok::Input&>,
+      "TokenizerR must be a callable type 'Tok::Token (Tok::Input&)'");
   return [tl = std::forward<TokenizerL>(tl),
          tr = std::forward<TokenizerR>(tr)](Tok::Input& input) -> Tok::Token {
            if (const auto first_token = tl(input); first_token)
