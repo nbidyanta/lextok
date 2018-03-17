@@ -5,10 +5,8 @@
  * @brief A lexical tokenization library that can potentially run at compile time.
  * @details This library provides a toolkit for building tokenizers. The tokenizers
  * work on `std::string_view` as input. For the time being, a custom implementation --
- * `CT::string_view`, is being used since `std::string_view` cannot be evaluated at
- * compile time. In the future, this will be replaced by `std::string_view`.
- * Inspiration for this library was drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/)
- * and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY).
+ * `CT::string_view`, is being used since parts of `std::string_view` cannot be evaluated
+ * at compile time. In the future, this will be replaced by `std::string_view`.
  *
  * A tokenizer is a lambda with the type `Tok::Token (Tok::Input& input)`.
  */
@@ -483,7 +481,7 @@ constexpr auto operator&(TokenizerL&& tl, TokenizerR&& tr) noexcept
 
 /**
  * @brief Create a tokenizer that chooses a successful match between two tokenizers.
- * @details If both tokenizers fail, this tokenizer also fails.
+ * @details At least one tokenizer must succeed for this tokenizer to succeed.
  * @tparam TokenizerL A callable type `Tok::Token (Tok::Input& input)`.
  * @tparam TokenizerR A callable type `Tok::Token (Tok::Input& input)`.
  * @param[in] tl A callable object of type `TokenizerL`. This is the first option to try.
