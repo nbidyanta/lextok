@@ -238,7 +238,7 @@ namespace Tok {
    * @returns A lambda that matches any of the characters (only one) in the group as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto any_char_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
+    constexpr auto any_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
     {
       static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
           "Map must be a callable type 'void (CT::string_view)'");
