@@ -48,10 +48,10 @@ static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests]
   [](CT::string_view& input) -> bool {
     std::string airline_name;
     std::uint16_t flight_number;
-    const auto token = Tok::sequence(
+    const auto token = (
         Tok::at_least_one(Tok::upper_alphabet(), [&airline_name](CT::string_view token) {
           airline_name = get_string(token);
-        }), Tok::at_least_one(Tok::digit(), [&flight_number](CT::string_view token) {
+        }) & Tok::at_least_one(Tok::digit(), [&flight_number](CT::string_view token) {
           flight_number = static_cast<std::uint16_t>(std::stoul(token.data()));
         }))(input);
     return token && *token == "AA535" && airline_name == "AA" && flight_number == 535;
@@ -59,8 +59,8 @@ static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests]
 
   [](CT::string_view& input) -> bool {
     std::uint32_t hex_data = 0;
-    const auto token = Tok::sequence(
-        Tok::str_token("0x"),
+    const auto token = (
+        Tok::str_token("0x") &
         Tok::at_least_one(Tok::hex_digit([&hex_data](CT::string_view token) {
             hex_data *= 16;
             hex_data += (token[0] >= 'a' ?
