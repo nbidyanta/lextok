@@ -83,7 +83,7 @@ namespace Tok {
     constexpr auto alphabet(Map&& func = mapper::none) noexcept
     {
       return impl::single_char_tokenizer(
-          [func = std::forward<Map>(func)](char c) -> bool {
+          [](char c) -> bool {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
           }, func);
     }
@@ -417,56 +417,6 @@ namespace Tok {
              };
     }
 
-  namespace impl {
-    /**
-     * @brief Apply a tuple of tokenizers to the input.
-     * @tparam N Number of tokenizers.
-     * @tparam Tuple A type representing the tuple of callable types `Tok::Token (Tok::Input& input)`.
-     * @tparam I A sequence of integers used to unpack the tokenizers from the tuple.
-     * @param[in] tokenizer A tuple of tokenizers of types `Tokenizers`.
-     * @param[in] input Reference to an `Input`.
-     * @param[in] s A sequence of unsigned integers in increasing order.
-     * @returns A token natched by a series of tokenizers.
-     */
-    template<std::size_t N, typename Tuple, std::size_t... I>
-      constexpr Token apply_tokenizers(Tuple&& tokenizer, Input& input, std::index_sequence<I...> s) noexcept
-      {
-        const auto input_tokenize = input;
-        std::size_t token_size = 0;
-        const Token tokens[N] = {std::get<I>(tokenizer)(input)...};
-        for (std::size_t i = 0; i < N; i++) {
-          if (!tokens[i]) {
-            input = input_tokenize;
-            return {};
-          }
-          token_size += (*tokens[i]).size();
-        }
-        return {{input_tokenize, token_size}};
-      }
-  }
-
-  /**
-   * @brief Create a tokenizer that accepts matches of multiple tokenizers in sequence.
-   * @details All tokenizers must succeed for a successful match.
-   * @tparam Tokenizers A pack callable types `Tok::Token (Tok::Input& input)`.
-   * @param[in] tokenizers A pack of callable objects of the types listed in `Tokenizers`.
-   * @returns A lambda that accepts an ordered sequence of matches by multiple tokenizers.
-   */
-  template<typename... Tokenizers>
-    constexpr auto sequence(Tokenizers&&... tokenizers) noexcept
-    {
-      static_assert((std::is_invocable_r_v<Tok::Token, Tokenizers, Tok::Input&> && ...),
-          "All Tokenizers must be a callable type 'Tok::Token (Tok::Input&)'");
-      return [tokenizer_tuple = std::make_tuple(std::forward<Tokenizers>(tokenizers)...)](Input& input) -> Token {
-        constexpr auto num_tokenizers = std::tuple_size_v<decltype(tokenizer_tuple)>;
-        return impl::apply_tokenizers<num_tokenizers>(
-            tokenizer_tuple,
-            input,
-            std::make_index_sequence<num_tokenizers>{}
-          );
-      };
-    }
-
   /**
    * @brief Apply a callable object to the output of a sequence tokenizer.
    * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
@@ -477,7 +427,7 @@ namespace Tok {
    * applies a callable object to the result.
    */
   template<typename Tokenizer, typename Map>
-    constexpr auto map_seq(Tokenizer&& seq, Map&& func) noexcept
+    constexpr auto map(Tokenizer&& seq, Map&& func) noexcept
     {
       static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
           "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
@@ -499,6 +449,39 @@ namespace Tok {
 }
 
 /**
+ * @brief Create a tokenizer that accepts matches of multiple tokenizers in sequence.
+ * @details All tokenizers must succeed for a successful match.
+ * @tparam TokenizerL A callable type `Tok::Token (Tok::Input& input)`.
+ * @tparam TokenizerR A callable type `Tok::Token (Tok::Input& input)`.
+ * @param[in] tl A callable object of type `TokenizerL`. This is first to be evaluated.
+ * @param[in] tr A callable object of type `TokenizerR`. This is second to be evaluated.
+ * @returns A lambda that accepts an ordered sequence of matches by two tokenizers.
+ */
+template<typename TokenizerL, typename TokenizerR,
+  typename std::enable_if<
+    std::is_invocable_r_v<Tok::Token, TokenizerL, Tok::Input&> &&
+    std::is_invocable_r_v<Tok::Token, TokenizerR, Tok::Input&>
+  >* = nullptr>
+constexpr auto operator&(TokenizerL&& tl, TokenizerR&& tr) noexcept
+{
+  return [tl = std::forward<TokenizerL>(tl),
+         tr = std::forward<TokenizerR>(tr)](Tok::Input& input) -> Tok::Token {
+           const auto input_tokenize = input;
+           const auto tokenL = tl(input);
+           if (!tokenL) {
+             input = input_tokenize;
+             return {};
+           }
+           const auto tokenR = tr(input);
+           if (!tokenR) {
+             input = input_tokenize;
+             return {};
+           }
+           return {{input_tokenize, (*tokenL).size() + (*tokenR).size()}};
+         };
+}
+
+/**
  * @brief Create a tokenizer that chooses a successful match between two tokenizers.
  * @details If both tokenizers fail, this tokenizer also fails.
  * @tparam TokenizerL A callable type `Tok::Token (Tok::Input& input)`.
@@ -508,13 +491,13 @@ namespace Tok {
  * @returns A lambda that chooses the tokenizer that succeeds. In case all options fail,
  * the overall tokenizer also fails.
  */
-template<typename TokenizerL, typename TokenizerR>
+template<typename TokenizerL, typename TokenizerR,
+  typename std::enable_if<
+    std::is_invocable_r_v<Tok::Token, TokenizerL, Tok::Input&> &&
+    std::is_invocable_r_v<Tok::Token, TokenizerR, Tok::Input&>
+  >* = nullptr>
 constexpr auto operator|(TokenizerL&& tl, TokenizerR&& tr) noexcept
 {
-  static_assert(std::is_invocable_r_v<Tok::Token, TokenizerL, Tok::Input&>,
-      "TokenizerL must be a callable type 'Tok::Token (Tok::Input&)'");
-  static_assert(std::is_invocable_r_v<Tok::Token, TokenizerR, Tok::Input&>,
-      "TokenizerR must be a callable type 'Tok::Token (Tok::Input&)'");
   return [tl = std::forward<TokenizerL>(tl),
          tr = std::forward<TokenizerR>(tr)](Tok::Input& input) -> Tok::Token {
            if (const auto first_token = tl(input); first_token)
