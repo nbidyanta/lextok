@@ -164,7 +164,7 @@ std::cout << "Whole token : " << *token << "\n";
 std::cout << "IP address : " << IP << "\n";
 ~~~
 
-Every application of the tokenizer on the input consumes a part of the input only if it succeeds in matching the input. If the tokenizer fails to match the input, the input is left unconsumed. Instead of applying `at_CGPADDR_cmd_parser` to the input, it is also possible to apply the constituent tokenizers separately to the input as follows:
+Every application of the tokenizer on the input consumes a part of it only if it succeeds in matching it. If the tokenizer fails to match the input, it is left unconsumed. Instead of applying `at_CGPADDR_cmd_parser` to the input, it is also possible to apply the constituent tokenizers separately to the input as follows:
 ~~~.c
 // 'input_view' contains the entire input.
 const auto t1 = guard(input_view);
@@ -175,7 +175,7 @@ const auto t4 = guard(input_view);
 // Ensure all tokenizers matched
 if (!t1 || !t2 || !t3 || !t4) {
     std::cout << "Failed to match a tokenizer\n";
-    return 0;
+    return 1;
 }
 
 // 'input_view' is now empty since all of it was matched.
