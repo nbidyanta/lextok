@@ -116,7 +116,7 @@ const auto token = quoted_string_tokenizer(input_view);
 
 // On failiure to find a quoted string, 'token' will hold 'std::nullopt'
 if (!token) {
-	std::cout << "No quoted string found\n";
+    std::cout << "No quoted string found\n";
     return 1;
 }
 
