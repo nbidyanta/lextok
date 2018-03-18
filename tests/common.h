@@ -1,5 +1,5 @@
-#ifndef _COMMON_H
-#define _COMMON_H
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <iostream>
 #include <algorithm>
@@ -24,6 +24,14 @@ namespace CT {
           rhs.begin(), rhs.end()) == std::make_pair(lhs.end(), rhs.end()))
       return true;
     return false;
+  }
+
+  std::string get_string(const CT::string_view& sv)
+  {
+    std::string str;
+    for (const auto& c : sv)
+      str += c;
+    return str;
   }
 
 }
