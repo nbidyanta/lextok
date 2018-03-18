@@ -107,7 +107,7 @@ const auto quoted_string_tokenizer =
     Tok::char_token('"') &
     Tok::at_least_one(
         Tok::none_of("\""),
-        [&str](CT::string_view token) {str = get_string(token);}
+        [&str](CT::string_view token) {str = CT::get_string(token);}
     ) &
     Tok::char_token('"');
 
@@ -146,7 +146,7 @@ CT::string_view input_view{input};
 const auto ipv4_octet = Tok::at_least_one(Tok::digit());
 const auto ipv4_dotted_octet = Tok::char_token('.') & ipv4_octet;
 const auto ipv4_addr = Tok::map(ipv4_octet &  Tok::exactly(ipv4_dotted_octet, 3),
-    [&IP](CT::string_view token) { IP = get_string(token); });
+    [&IP](CT::string_view token) { IP = CT::get_string(token); });
 const auto guard = Tok::exactly(Tok::newline(), 2);
 const auto cmd_CGPADDR = Tok::str_token("+CGPADDR: ");
 const auto at_CGPADDR_cmd_parser = guard & cmd_CGPADDR & ipv4_addr & guard;
