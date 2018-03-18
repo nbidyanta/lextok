@@ -26,9 +26,9 @@ This project uses CMake to generate the `Makefiles` and `make` to build the test
 
 To build & run tests and generate documentation, execute the following in the root directory of the project:
 ```
-$ cmake . -Bbuild -DENABLE_LEXTOK_TESTS=ON -DBUILD_LEXTOK_DOCS=ON
+$ cmake . -Bbuild -DENABLE_LEXTOK_TESTS=ON -DBUILD_LEXTOK_DOCS=ON -DBUILD_LEXTOK_EXAMPLES=ON
 $ cd build
-$ make              # Builds the tests
+$ make              # Builds the tests and examples
 $ make tests        # Runs the tests
 ```
 
@@ -49,6 +49,7 @@ $ make help     # List all targets that can be invoked via make
 ```
 $ cmake -LH ..  # Display a list of options that were set for this build
 ```
+
 
 ## Building blocks
 This toolkit provides basic building blocks which are used to make non-trivial tokenizers. By default, all blocks only attempt to match. However, this functionality can be changed by passing a callable object to the tokenizer directly, or mapping a callable object to a tokenizer. Character class and literal matchers do the actual matching whereas modifiers combine / change the behavior of multiple character class and literal matchers.
@@ -85,7 +86,47 @@ Tokenizers are concatenated by overloading `operator&`, whereas they are alterna
 
 
 ## Examples
-Usage examples go here.
+`Tok::Token`s are an optionally populated type `std::optional<std::string_view>`. A `Tok::Input` is an alias of `std::string_view`. Tokenizers are callable objects of the type `Tok::Token (Tok::Input&)`. Maps are callable objects of the type `void (std::string_view)`. Currently `CT::string_view` is used instead in all three cases.
+
+A tokenizer is called on an input. Depending on whether the tokenizer succeeded or failed, it returns a `Tok::Token` or `std::nullopt` respectively. Used this way, the tokenizer only validates the input for a match. However, in order to do anything interesting with the matched tokens, the tokenizers expect a Map to be passed to it.
+
+Here are some examples on how to use the library's building blocks. For complete examples, look at the source files under `examples/`.
+```c++
+std::string str;                  // Will hold the extracted string
+std::string input = "\"this is a string\"";
+CT::string_view input_view{input};
+
+// Construct a tokenizer to validate the input is a quoted string.
+// Here, a quoted string is defined as at least one instance of
+// any character (other than a double quote) between two double quotes.
+// Notice how Tok::at_least_one is being passed a Map in the form of a
+// lambda to extract the actual string without the quotes. 'get_string'
+// is assumed to be a routine that converts a CT::string_view into a
+// std::string.
+const auto quoted_string_tokenizer =
+    Tok::char_token('"') &
+    Tok::at_least_one(
+        Tok::none_of("\""),
+        [&str](CT::string_view token) {str = get_string(token);}
+    ) &
+    Tok::char_token('"');
+
+// Apply the tokenizer to the input
+const auto token = quoted_string_tokenizer(input_view);
+
+// On failiure to find a quoted string, 'token' will hold 'std::nullopt'
+if (!token) {
+	std::cout << "No quoted string found\n";
+    return 1;
+}
+
+// 'token' now contains the entire quoted string, i.e. \"this is a string\".
+// However, 'str' contains the actual string itself without the quotes,
+// i.e. this is a string.
+assert((*token).data() == input);
+assert(str == "this is a string");
+std::cout << "Assertions succeeded\n";
+```
 
 
 ## Copyright
