@@ -6,6 +6,7 @@ find_package(Doxygen REQUIRED dot)
 
 option(BUILD_LEXTOK_DOCS "Generate HTML documentation for the Lexical Tokenizer (requires Doxygen and dot)" OFF)
 option(ENABLE_LEXTOK_TESTS "Run tests to verify the LexTok library" OFF)
+option(BUILD_LEXTOK_EXAMPLES "Build the examples" OFF)
 
 if (BUILD_LEXTOK_DOCS)
 	if (NOT DOXYGEN_FOUND)
@@ -35,4 +36,8 @@ target_include_directories(lextok INTERFACE lib)
 if (ENABLE_LEXTOK_TESTS)
 	enable_testing()
 	add_subdirectory(tests)
+endif()
+
+if (BUILD_LEXTOK_EXAMPLES)
+	add_subdirectory(examples)
 endif()
