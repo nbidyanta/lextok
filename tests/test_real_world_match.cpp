@@ -66,7 +66,6 @@ static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests]
         Tok::at_least_one(Tok::digit(), [&value](CT::string_view token) {
           value *= static_cast<int>(stoul(get_string(token)));
         }) & (Tok::char_token('C') | Tok::char_token('F')))(input);
-    std::cerr << "val = " << value << "\n";
     return token && value == 19;
   }
 
