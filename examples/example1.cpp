@@ -1,14 +1,17 @@
+/**
+ * @file example1.cpp
+ * @brief Shows the basic usage of the library.
+ * @details For more details look in the `examples/` directory.
+ * @example example1.cpp
+ */
 #include <cassert>
 #include "common.h"
 
-static std::string get_string(const CT::string_view& sv)
-{
-  std::string str;
-  for (const auto& c : sv)
-    str += c;
-  return str;
-}
-
+/**
+ * @brief Main entry point.
+ * @retval 0 On success
+ * @retval 1 On failure
+ */
 int main()
 {
 	std::string str;                  // Will hold the extracted string
@@ -26,7 +29,7 @@ int main()
     Tok::char_token('"') &
     Tok::at_least_one(
         Tok::none_of("\""),
-        [&str](CT::string_view token) {str = get_string(token);}
+        [&str](CT::string_view token) {str = CT::get_string(token);}
     ) &
     Tok::char_token('"');
 
