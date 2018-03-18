@@ -1,5 +1,5 @@
 # Lexical Tokenizer	{#mainpage}
-An experimental header-only C++ library that provides a toolkit to build lexical tokenization routines that could potentially be run at compile time. For certain cases it could also be used to build parser. It is based on inspiration drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/) and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY). The library relies on fairly modern features of the language (C++17), such as (but not limited to):
+An experimental header-only C++ library that provides a toolkit to build lexical tokenization routines that could potentially be run at compile time. For certain cases it could also be used to build a parser. It is based on inspiration drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/) and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY). The library relies on fairly modern features of the language (C++17), such as (but not limited to):
 * [`std::is_invocable_r_v`](http://en.cppreference.com/w/cpp/types/is_invocable)
 * [`constexpr` lambda](http://en.cppreference.com/w/cpp/language/lambda)
 * [`constexpr std::string_view`](http://en.cppreference.com/w/cpp/string/basic_string_view)
@@ -172,11 +172,17 @@ const auto t2 = cmd_CGPADDR(input_view);
 const auto t3 = ipv4_addr(input_view);
 const auto t4 = guard(input_view);
 
+// Ensure all tokenizers matched
+if (!t1 || !t2 || !t3 || !t4) {
+    std::cout << "Failed to match a tokenizer\n";
+    return 0;
+}
+
 // 'input_view' is now empty since all of it was matched.
-assert(t1 == "\r\n");
-assert(t2 == "+CGPADDR: ");
-assert(t3 == "128.14.178.01");
-assert(t4 == "\r\n");
+assert(*t1 == "\r\n");
+assert(*t2 == "+CGPADDR: ");
+assert(*t3 == "128.14.178.01");
+assert(*t4 == "\r\n");
 ~~~
 
 ## Copyright
