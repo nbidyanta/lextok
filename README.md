@@ -1,5 +1,5 @@
 # Lexical Tokenizer	{#mainpage}
-An experimental header-only C++ library that provides a toolkit to build lexical tokenization routines that could potentially be run at compile time. It is based on inspiration drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/) and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY). The library relies on a fairly modern version of the language (C++17), such as (but not limited to):
+An experimental header-only C++ library that provides a toolkit to build lexical tokenization routines that could potentially be run at compile time. It is based on inspiration drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/) and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY). The library relies on fairly modern features of the language (C++17), such as (but not limited to):
 * [`std::is_invocable_r_v`](http://en.cppreference.com/w/cpp/types/is_invocable)
 * [`constexpr` lambda](http://en.cppreference.com/w/cpp/language/lambda)
 * [`constexpr std::string_view`](http://en.cppreference.com/w/cpp/string/basic_string_view)
