@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <iterator>
 #include <algorithm>
+#include <string>
 
 /// Main namespace for the Compile Time library
 namespace CT {
@@ -55,6 +56,12 @@ namespace CT {
        * @param[in] cstr Pointer to a NULL terminated string.
        */
       constexpr string_view(const char* cstr) noexcept : str(cstr), sz{strlen(cstr)} {}
+
+      /**
+       * @brief Consturct a `string_view` from a `std::string`.
+       * @param[in] std_str A reference to a `std::string`.
+       */
+      string_view(const std::string& std_str) : str(std_str.c_str()), sz{strlen(std_str.c_str())} {}
 
       /**
        * @brief Construct a `string_view` from a slice of `string_view`.
