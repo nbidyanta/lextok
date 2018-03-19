@@ -68,7 +68,7 @@ namespace Tok {
      * @brief Define a no-op callable object that can be invoked on a token.
      * @param[in] token A view into the string representing the token.
      */
-    constexpr void none(CT::string_view token) {}
+    constexpr void none(CT::string_view token) noexcept {}
   }
 
   /**
