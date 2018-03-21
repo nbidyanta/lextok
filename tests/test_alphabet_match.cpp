@@ -1,7 +1,7 @@
 #include "common.h"
 #include <functional>
 
-static CT::string_view input[] = {
+static Tok::Input input[] = {
   {},                           // Empty input
   {"12-4"},                     // No matches
   {"G"},                        // Normal match (upper case)
@@ -13,53 +13,53 @@ static CT::string_view input[] = {
   {"ThisIsACamelCaseSentence"}  // Count number of tokens matched
 };
 
-static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(CT::string_view);
+static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(Tok::Input);
 
-static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests] = {
+static std::function<bool(Tok::Input& input)> test_drivers[number_of_tests] = {
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::alphabet()(input);
     return !token ? true : false;
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::alphabet()(input);
     return !token ? true : false;
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::alphabet()(input);
     return token && *token == "G";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::alphabet()(input);
     return token && *token == "x";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::many(Tok::alphabet())(input);
     return token && *token == "nB";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::many(Tok::alphabet())(input);
     return token && *token == "";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::at_least_one(Tok::alphabet())(input);
     return token && *token == "f";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::at_least_one(Tok::alphabet())(input);
     return !token ? true : false;
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     std::size_t sz = 0;
-    const auto token = Tok::at_least_one(Tok::alphabet([&sz](CT::string_view){ sz++; }))(input);
+    const auto token = Tok::at_least_one(Tok::alphabet([&sz](Tok::Token_view){ sz++; }))(input);
     return token && *token == "ThisIsACamelCaseSentence" && sz == CT::strlen("ThisIsACamelCaseSentence");
   }
 

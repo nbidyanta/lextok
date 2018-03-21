@@ -1,7 +1,7 @@
 #include "common.h"
 #include <functional>
 
-static CT::string_view input[] = {
+static Tok::Input input[] = {
   {},               // Empty input
   {"12-4"},         // No matches
   {"G"},            // Mismatch (upper case)
@@ -13,53 +13,53 @@ static CT::string_view input[] = {
   {"IAMSHOUTING"}   // Count number of tokens matched
 };
 
-static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(CT::string_view);
+static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(Tok::Input);
 
-static std::function<bool(CT::string_view& input)> test_drivers[number_of_tests] = {
+static std::function<bool(Tok::Input& input)> test_drivers[number_of_tests] = {
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::upper_alphabet()(input);
     return (!token) ? true : false;
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::upper_alphabet()(input);
     return (!token) ? true : false;
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::upper_alphabet()(input);
     return token && *token == "G";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::upper_alphabet()(input);
     return (!token) ? true : false;
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::many(Tok::upper_alphabet())(input);
     return token && *token == "BA";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::many(Tok::upper_alphabet())(input);
     return token && *token == "";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::at_least_one(Tok::upper_alphabet())(input);
     return token && *token == "F";
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     const auto token = Tok::at_least_one(Tok::upper_alphabet())(input);
     return (!token) ? true : false;
   },
 
-  [](CT::string_view& input) -> bool {
+  [](Tok::Input& input) -> bool {
     std::size_t sz = 0;
-    const auto token = Tok::at_least_one(Tok::upper_alphabet([&sz](CT::string_view){ sz++; }))(input);
+    const auto token = Tok::at_least_one(Tok::upper_alphabet([&sz](Tok::Token_view){ sz++; }))(input);
     return token && *token == "IAMSHOUTING" && sz == CT::strlen("IAMSHOUTING");
   }
 

@@ -16,20 +16,20 @@ int main()
 {
 	std::string str;                  // Will hold the extracted string
 	std::string input = "\"this is a string\"";
-	CT::string_view input_view{input};
+  Tok::Input input_view{input};
 
   // Construct a tokenizer to validate the input is a quoted string.
   // Here, a quoted string is defined as at least one instance of
   // any character (other than a double quote) between two double quotes.
   // Notice how Tok::at_least_one is being passed a Map in the form of a
   // lambda to extract the actual string without the quotes. 'get_string'
-  // is assumed to be a routine that converts a CT::string_view into a
+  // is assumed to be a routine that converts a Tok::Token_view into a
   // std::string.
   const auto quoted_string_tokenizer =
     Tok::char_token('"') &
     Tok::at_least_one(
         Tok::none_of("\""),
-        [&str](CT::string_view token) {str = CT::get_string(token);}
+        [&str](Tok::Token_view token) {str = CT::get_string(token);}
     ) &
     Tok::char_token('"');
 

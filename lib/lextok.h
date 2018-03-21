@@ -27,6 +27,8 @@ namespace Tok {
 
   using Token = std::optional<CT::string_view>; /**< Define a type to optionally hold a token. */
 
+  using Token_view = CT::string_view; /**< Define a type that provides a view of the extracted token. */
+
   /// Private namespace that holds implementation details
   namespace impl {
     /**
@@ -35,7 +37,7 @@ namespace Tok {
      * the function template. On a match, `func` is called on it.
      * @tparam Acceptor_Predicate A callable object that is of the type `bool (char c)`. It returns
      * `true` if the character `c` satisfies the condition to be classified as a token.
-     * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+     * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
      * @param[in] pred A predicate that decides if a character is an acceptable token.
      * @param[in] func A callable object to further process / map the extracted token.
      * @returns A lambda that extracts a single character token based on the predicate.
@@ -43,8 +45,8 @@ namespace Tok {
     template<typename Acceptor_Predicate, typename Map>
       constexpr auto single_char_tokenizer(Acceptor_Predicate&& pred, Map&& func) noexcept
       {
-        static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-            "Map must be a callable type 'void (CT::string_view)'");
+        static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+            "Map must be a callable type 'void (Tok::Token_view)'");
         static_assert(std::is_invocable_r_v<bool, Acceptor_Predicate, char>,
             "Acceptor_Predicate must be a callable type 'bool (char c)'");
         return [p = std::forward<Acceptor_Predicate>(pred),
@@ -52,7 +54,7 @@ namespace Tok {
           if (input.size() == 0)
             return {};
           if (p(input[0])) {
-            const CT::string_view token{input, 1};
+            const Token_view token{input, 1};
             func(token);
             input.remove_prefix(1);
             return {token};
@@ -68,12 +70,12 @@ namespace Tok {
      * @brief Define a no-op callable object that can be invoked on a token.
      * @param[in] token A view into the string representing the token.
      */
-    constexpr void none(CT::string_view token) noexcept {}
+    constexpr void none(Token_view token) noexcept {}
   }
 
   /**
    * @brief Create a tokenizer that matches lower and upper case alphabets.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches an alphabet [a-zA-Z] as a token.
    */
@@ -88,7 +90,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches only lower case alphabets.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches a lower case alphabet [a-z] as a token.
    */
@@ -103,7 +105,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches only upper case alphabets.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches an upper case alphabet [A-Z] as a token.
    */
@@ -118,7 +120,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches only decimal digits.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches a decimal digit [0-9] as a token.
    */
@@ -133,7 +135,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches only hexadecimal digits.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches a hexadecimal digit [a-fA-F0-9] as a token.
    */
@@ -148,7 +150,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches whitespace.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches a whitespace [ \\t\\r\\n] as a token.
    */
@@ -163,7 +165,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches any 8-bit character.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches an 8-bit character [.] as a token.
    */
@@ -178,7 +180,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches a newline character.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches a newline character [\\r\\n] as a token.
    */
@@ -193,7 +195,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer to match a character.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] c Character to be matched.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches the character specified, as a token.
@@ -209,7 +211,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer to match a literal string pointed to by 'str'.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] str A view into the string that needs to be extracted into a token.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches the given string as a token.
@@ -217,8 +219,8 @@ namespace Tok {
   template<typename Map = decltype(mapper::none)>
     constexpr auto str_token(CT::string_view str, Map&& func = mapper::none) noexcept
     {
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         if (!input.starts_with(str))
           return {};
@@ -230,7 +232,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that matches a single character out of the group of characters provided.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] char_group A view into the group of characters that could be matched.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches any of the characters (only one) in the group as a token.
@@ -238,12 +240,12 @@ namespace Tok {
   template<typename Map = decltype(mapper::none)>
     constexpr auto any_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
     {
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         for (const auto& c : char_group)
           if (input.starts_with(c)) {
-            const CT::string_view token{input, 1};
+            const Token_view token{input, 1};
             func(token);
             input.remove_prefix(1);
             return {token};
@@ -254,7 +256,7 @@ namespace Tok {
 
   /**
    * @brief Create a tokenizer that will match a character **not** in the group of characters provided.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] char_group A view into the group of characters that will not be matched.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that matches a character **not** in the group of characters, as a token.
@@ -262,13 +264,13 @@ namespace Tok {
   template<typename Map = decltype(mapper::none)>
     constexpr auto none_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
     {
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         for (const auto& c : char_group)
           if (input.starts_with(c))
             return {};
-        const CT::string_view token{input, 1};
+        const Token_view token{input, 1};
         func(token);
         input.remove_prefix(1);
         return {token};
@@ -300,7 +302,7 @@ namespace Tok {
   /**
    * @brief Create a tokenizer that matches multiple instances (zero or many) of another tokenizer.
    * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] tokenizer A callable object of type `Tokenizer`.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that accepts zero or more number of tokens matched by `tokenizer`.
@@ -310,12 +312,12 @@ namespace Tok {
     {
       static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
           "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto token_size = impl::accumulation_size(tokenizer, input);
-               const CT::string_view token{input, token_size};
+               const Token_view token{input, token_size};
                func(token);
                input.remove_prefix(token_size);
                return {token};
@@ -325,7 +327,7 @@ namespace Tok {
   /**
    * @brief Create a tokenizer that matches an exact number number of instances of another tokenizer.
    * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] tokenizer A callable object of type `Tokenizer`.
    * @param[in] n The number of times the token needs to be matched.
    * @param[in] func A callable object of type `Map`.
@@ -336,8 +338,8 @@ namespace Tok {
     {
       static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
           "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [=, tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
@@ -350,7 +352,7 @@ namespace Tok {
                  }
                  token_size += (*token).size();
                }
-               const CT::string_view token{input_tokenize, token_size};
+               const Token_view token{input_tokenize, token_size};
                func(token);
                return {token};
              };
@@ -359,7 +361,7 @@ namespace Tok {
   /**
    * @brief Create a tokenizer that matches at least one instance of another tokenizer.
    * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] tokenizer A callable object of type `Tokenizer`.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that accepts at least one instance of the tokens matched by `tokenizer`.
@@ -369,8 +371,8 @@ namespace Tok {
     {
       static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
           "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
@@ -380,7 +382,7 @@ namespace Tok {
                  return {};
                }
                std::size_t token_size_trailing = impl::accumulation_size(tokenizer, input);
-               const CT::string_view token{input_tokenize, token_size_trailing + (*first_token).size()};
+               const Token_view token{input_tokenize, token_size_trailing + (*first_token).size()};
                func(token);
                input.remove_prefix(token_size_trailing);
                return {token};
@@ -391,7 +393,7 @@ namespace Tok {
    * @brief Create a tokenizer that optionally accepts matches of another tokenizer.
    * @details In case of an empty match, `func` is still called.
    * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] tokenizer A callable object of type `Tokenizer`.
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that optionally accepts one instance of the tokens matched by `tokenizer`.
@@ -401,14 +403,14 @@ namespace Tok {
     {
       static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
           "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto token = tokenizer(input);
                if (!token) {
                  func({});
-                 return {CT::string_view{}};
+                 return {Token_view{}};
                }
                func(*token);
                return token;
@@ -418,7 +420,7 @@ namespace Tok {
   /**
    * @brief Apply a callable object to the output of a sequence tokenizer.
    * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
-   * @tparam Map A callable type `void (CT::string_view)`. It is called on the extracted token.
+   * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] seq A sequence tokenizer (returned by Tok::sequence).
    * @param[in] func A callable object of type `Map`.
    * @returns A lambda that accepts an ordered sequence of matches by two tokenizers and
@@ -429,8 +431,8 @@ namespace Tok {
     {
       static_assert(std::is_invocable_r_v<Tok::Token, Tokenizer, Tok::Input&>,
           "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'");
-      static_assert(std::is_invocable_r_v<void, Map, CT::string_view>,
-          "Map must be a callable type 'void (CT::string_view)'");
+      static_assert(std::is_invocable_r_v<void, Map, Token_view>,
+          "Map must be a callable type 'void (Tok::Token_view)'");
       return [seq = std::forward<Tokenizer>(seq),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;

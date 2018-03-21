@@ -86,7 +86,7 @@ Tokenizers are concatenated by overloading `operator&`, whereas they are alterna
 
 
 ## Examples
-`Tok::Token`s are an optionally populated type `std::optional<std::string_view>`. A `Tok::Input` is an alias of `std::string_view`. Tokenizers are callable objects of the type `Tok::Token (Tok::Input&)`. Maps are callable objects of the type `void (std::string_view)`. Currently `CT::string_view` is used instead in all three cases.
+`Tok::Token`s are an optionally populated type `std::optional<std::string_view>`. A `Tok::Input` and `Tok::Token_view` are aliases of `std::string_view`. Tokenizers are callable objects of the type `Tok::Token (Tok::Input&)`. Maps are callable objects of the type `void (Tok::Token_view)`. Currently `CT::string_view` is used instead in all three cases.
 
 A tokenizer is called on an input. Depending on whether the tokenizer succeeded or failed, it returns a `Tok::Token` or `std::nullopt` respectively. Used this way, the tokenizer only validates the input. However, in order to do anything interesting with the matched tokens, the tokenizers expect a Map to be passed to them.
 
@@ -94,20 +94,20 @@ For complete examples, look at the source files under `examples/`. Following is 
 ~~~.cpp
 std::string str;                  // Will hold the extracted string
 std::string input = "\"this is a string\"";
-CT::string_view input_view{input};
+Input input_view{input};
 
 // Construct a tokenizer to validate the input is a quoted string.
 // Here, a quoted string is defined as at least one instance of
 // any character (other than a double quote) between two double quotes.
 // Notice how Tok::at_least_one is being passed a Map in the form of a
 // lambda to extract the actual string without the quotes. 'get_string'
-// is assumed to be a routine that converts a CT::string_view into a
+// is assumed to be a routine that converts a Tok::Token_view into a
 // std::string.
 const auto quoted_string_tokenizer =
     Tok::char_token('"') &
     Tok::at_least_one(
         Tok::none_of("\""),
-        [&str](CT::string_view token) {str = CT::get_string(token);}
+        [&str](Tok::Token_view token) {str = CT::get_string(token);}
     ) &
     Tok::char_token('"');
 
@@ -132,7 +132,7 @@ The library can also be used to build simple parsers. For this case, it is advis
 ~~~.cpp
 std::string IP;                 // Will hold the extracted IP address
 std::string input = "\r\n+CGPADDR: 128.14.178.01\r\n";
-CT::string_view input_view{input};
+Tok::Input input_view{input};
 
 // Create a parser for the response of an AT command from a modem.
 // Here's the EBNF the following code replicates:
@@ -146,7 +146,7 @@ CT::string_view input_view{input};
 const auto ipv4_octet = Tok::at_least_one(Tok::digit());
 const auto ipv4_dotted_octet = Tok::char_token('.') & ipv4_octet;
 const auto ipv4_addr = Tok::map(ipv4_octet &  Tok::exactly(ipv4_dotted_octet, 3),
-    [&IP](CT::string_view token) { IP = CT::get_string(token); });
+    [&IP](Tok::Token_view token) { IP = CT::get_string(token); });
 const auto guard = Tok::exactly(Tok::newline(), 2);
 const auto cmd_CGPADDR = Tok::str_token("+CGPADDR: ");
 const auto at_CGPADDR_cmd_parser = guard & cmd_CGPADDR & ipv4_addr & guard;
