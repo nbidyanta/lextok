@@ -72,10 +72,10 @@ namespace CT {
         str{sv.data()}, sz{std::min(count, sv.size())} {}
 
       /**
-       * @brief Construct a `string_view` from another `string_view`.
+       * @brief Trivially construct a `string_view` from another `string_view`.
        * @param[in] sv Reference to a `string_view`.
        */
-      constexpr string_view(const string_view& sv) noexcept : str{sv.data()}, sz{sv.size()} {}
+      constexpr string_view(const string_view& sv) noexcept = default;
 
       /**
        * @brief Remove a prefix of size `n`.

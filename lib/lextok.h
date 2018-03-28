@@ -492,8 +492,8 @@ constexpr auto operator|(TokenizerL&& tl, TokenizerR&& tr) noexcept
 {
   return [tl = std::forward<TokenizerL>(tl),
          tr = std::forward<TokenizerR>(tr)](Tok::Input& input) -> Tok::Token {
-           if (const auto first_token = tl(input); first_token)
-             return first_token;
+           if (const auto token = tl(input); token)
+             return token;
            return tr(input);
          };
 }
