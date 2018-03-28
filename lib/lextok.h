@@ -65,15 +65,12 @@ namespace Tok {
         VALIDATE_ACCEPTOR_TYPE(Acceptor_Predicate);
         return [p = std::forward<Acceptor_Predicate>(pred),
         func = std::forward<Map>(func)](Input& input) -> Token {
-          if (input.size() == 0)
+          if (input.size() == 0 || !p(input[0]))
             return {};
-          if (p(input[0])) {
-            const Token_view token{input, 1};
-            func(token);
-            input.remove_prefix(1);
-            return {token};
-          }
-          return {};
+          const Token_view token{input, 1};
+          func(token);
+          input.remove_prefix(1);
+          return {token};
         };
       }
   }
@@ -217,8 +214,9 @@ namespace Tok {
   template<typename Map = decltype(mapper::none)>
     constexpr auto char_token(char c, Map&& func = mapper::none) noexcept
     {
+      VALIDATE_MAP_TYPE(Map);
       return impl::single_char_tokenizer(
-          [c, func = std::forward<Map>(func)](char ch) -> bool {
+          [c](char ch) -> bool {
             return c == ch;
           }, func);
     }
@@ -353,10 +351,8 @@ namespace Tok {
                std::size_t token_size = 0;
                for (std::size_t i = 0; i < n; i++) {
                  auto token = tokenizer(input);
-                 if (!token) {
-                   input = input_tokenize;
+                 if (!token)
                    return {};
-                 }
                  token_size += (*token).size();
                }
                const Token_view token{input_tokenize, token_size};
@@ -382,10 +378,8 @@ namespace Tok {
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto input_tokenize = input;
                const auto first_token = tokenizer(input);
-               if (!first_token) {
-                 input = input_tokenize;
+               if (!first_token)
                  return {};
-               }
                std::size_t token_size_trailing = impl::accumulation_size(tokenizer, input);
                const Token_view token{input_tokenize, token_size_trailing + (*first_token).size()};
                func(token);
@@ -436,12 +430,9 @@ namespace Tok {
       VALIDATE_MAP_TYPE(Map);
       return [seq = std::forward<Tokenizer>(seq),
              func = std::forward<Map>(func)](Input& input) -> Token {
-               const auto input_tokenize = input;
                const auto token = seq(input);
-               if (!token) {
-                 input = input_tokenize;
+               if (!token)
                  return {};
-               }
                func(*token);
                return {token};
              };
