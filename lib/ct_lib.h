@@ -140,6 +140,22 @@ namespace CT {
       constexpr const char& operator[](std::size_t index) const noexcept { return str[index]; }
 
       /**
+       * @brief Equality operator.
+       * @param[in] Reference to rhs.
+       * @retval true Views match.
+       * @retval false Views mismatch.
+       */
+      constexpr bool operator==(const string_view& rhs) const noexcept
+      {
+        if (sz != rhs.size())
+          return false;
+        for (std::size_t i = 0; i < sz; i++)
+          if (str[i] != rhs[i])
+            return false;
+        return true;
+      }
+
+      /**
        * @brief Verify if the `string_view` starts with a given prefix.
        * @param[in] prefix Constant reference to a view holding the prefix.
        * @retval true Prefix was found.
