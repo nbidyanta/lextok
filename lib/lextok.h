@@ -20,16 +20,25 @@
 
 #include "ct_lib.h"    // XXX: Only needed until std::string_view is constexpr enabled.
 
+/**
+ * @brief A helper macro to assert in case of invalid Map type.
+ */
 #define VALIDATE_MAP_TYPE(map_type) { \
   static_assert(std::is_invocable_r_v<void, map_type, Token_view>, \
       "Map must be a callable type 'void (Tok::Token_view)'"); \
 }
 
+/**
+ * @brief A helper macro to assert in case of invalid Tokenizer type.
+ */
 #define VALIDATE_TOKENIZER_TYPE(tokenizer_type) { \
   static_assert(std::is_invocable_r_v<Tok::Token, tokenizer_type, Tok::Input&>, \
       "Tokenizer must be a callable type 'Tok::Token (Tok::Input&)'"); \
 }
 
+/**
+ * @brief A helper macro to assert in case of invalid Acceptor type.
+ */
 #define VALIDATE_ACCEPTOR_TYPE(acceptor_type) { \
   static_assert(std::is_invocable_r_v<bool, acceptor_type, char>, \
       "Acceptor_Predicate must be a callable type 'bool (char c)'"); \

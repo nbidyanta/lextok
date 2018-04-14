@@ -141,7 +141,7 @@ namespace CT {
 
       /**
        * @brief Equality operator.
-       * @param[in] Reference to rhs.
+       * @param[in] rhs Reference to rhs.
        * @retval true Views match.
        * @retval false Views mismatch.
        */
