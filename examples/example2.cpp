@@ -4,7 +4,11 @@
  * @details For more details look in the `examples/` directory.
  * @example example2.cpp
  */
-#include "common.h"
+#include <iostream>
+#include <algorithm>
+#include <string>
+
+#include "lextok.h"
 
 /**
  * @brief Main entry point.
@@ -14,8 +18,7 @@
 int main()
 {
   std::string IP;                 // Will hold the extracted IP address
-  std::string input = "\r\n+CGPADDR: 128.14.178.01\r\n";
-  Tok::Input input_view{input};
+  Tok::Input input_view("\r\n+CGPADDR: 128.14.178.01\r\n"sv);
 
   // Create a parser for the response of an AT command from a modem.
   // Here's the EBNF the following code replicates:
@@ -29,7 +32,7 @@ int main()
   const auto ipv4_octet = Tok::at_least_one(Tok::digit());
   const auto ipv4_dotted_octet = Tok::char_token('.') & ipv4_octet;
   const auto ipv4_addr = Tok::map(ipv4_octet &  Tok::exactly(ipv4_dotted_octet, 3),
-      [&IP](Tok::Token_view token) { IP = CT::get_string(token); });
+      [&IP](Tok::Token_view token) { IP = token; });
   const auto guard = Tok::exactly(Tok::newline(), 2);
   const auto cmd_CGPADDR = Tok::str_token("+CGPADDR: ");
   const auto at_CGPADDR_cmd_parser = guard & cmd_CGPADDR & ipv4_addr & guard;
