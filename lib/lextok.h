@@ -54,6 +54,8 @@ namespace Tok {
 
   using Token_view = CT::string_view; /**< Define a type that provides a view of the extracted token. */
 
+  using Predicate = CT::string_view;  /**< Define a type that provides a view into characters that serve as predicates. */
+
   /// Private namespace that holds implementation details
   namespace impl {
     /**
@@ -238,7 +240,7 @@ namespace Tok {
    * @returns A lambda that matches the given string as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto str_token(CT::string_view str, Map&& func = mapper::none) noexcept
+    constexpr auto str_token(Predicate str, Map&& func = mapper::none) noexcept
     {
       VALIDATE_MAP_TYPE(Map);
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
@@ -258,7 +260,7 @@ namespace Tok {
    * @returns A lambda that matches any of the characters (only one) in the group as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto any_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
+    constexpr auto any_of(Predicate char_group, Map&& func = mapper::none) noexcept
     {
       VALIDATE_MAP_TYPE(Map);
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
@@ -281,7 +283,7 @@ namespace Tok {
    * @returns A lambda that matches a character **not** in the group of characters, as a token.
    */
   template<typename Map = decltype(mapper::none)>
-    constexpr auto none_of(CT::string_view char_group, Map&& func = mapper::none) noexcept
+    constexpr auto none_of(Predicate char_group, Map&& func = mapper::none) noexcept
     {
       VALIDATE_MAP_TYPE(Map);
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
