@@ -1,5 +1,5 @@
 # Lexical Tokenizer	{#mainpage}
-An experimental header-only C++ library that provides a toolkit to build lexical tokenization routines that could potentially be run at compile time. For certain cases it could also be used to build a parser. It is based on inspiration drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/) and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY). The library relies on fairly modern features of the language (C++17), such as (but not limited to):
+An experimental header-only C++ library that provides a toolkit to build lexical tokenization routines that could potentially be run at compile time. For certain trivial cases it could also be used to build a parser. It is based on inspiration drawn from [here](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/) and [here](https://www.youtube.com/watch?v=PJwd4JLYJJY). The library relies on fairly modern features of the language (C++17), such as (but not limited to):
 * [`std::is_invocable_r_v`](http://en.cppreference.com/w/cpp/types/is_invocable)
 * [`constexpr` lambda](http://en.cppreference.com/w/cpp/language/lambda)
 * [`constexpr std::string_view`](http://en.cppreference.com/w/cpp/string/basic_string_view)
@@ -8,8 +8,6 @@ An experimental header-only C++ library that provides a toolkit to build lexical
 * [`if` intializers](http://en.cppreference.com/w/cpp/language/if)
 
 The main motivation to write this in C++17 was personal -- it was to gain a better understanding of the latest C++ standard and to pull up my skills and mindset from the level of C. It should be possible to write something similar with older standards. However, it might be more verbose and possibly lack compile-time evaluation.
-
-As of Q1 2018, most compilers are still implementing the remaining parts of the C++17 standard. For example, the header `<charconv>` is still missing. In particular, `std::string_view` is still not `constexpr` in GCC 7.2. Therefore, an auxiliary header-only library (`ct_lib.h`) is provided to make up for the missing functionality. Using this library, references to `std::string_view` are replaced with `CT::string_view`. Once compilers are fully C++17 compliant, `ct_lib.h` will no longer be necessary.
 
 
 ## Prerequisites
@@ -52,7 +50,7 @@ $ cmake -LH ..  # Display a list of options that were set for this build
 
 
 ## Building blocks
-This toolkit provides basic building blocks which are used to make non-trivial tokenizers. By default, all blocks only attempt to match. However, this functionality can be changed by passing a callable object to the tokenizer directly, or mapping a callable object to a tokenizer. Character class and literal matchers do the actual matching whereas modifiers combine / change the behavior of the other matchers.
+This toolkit provides basic building blocks which are used to make non-trivial tokenizers. By default, all blocks only attempt to match. However, this functionality can be changed by passing a callable object to the tokenizer directly, or mapping a callable object to the result of a tokenizer. Character class and literal matchers do the actual matching whereas modifiers combine / change the behavior of the matchers.
 
 ### Character Classes
 |Character Class Matchers|Equivalent Regular Expression|
@@ -86,28 +84,26 @@ Tokenizers are concatenated by overloading `operator&`, whereas they are alterna
 
 
 ## Examples
-`Tok::Token`s are an optionally populated type `std::optional<std::string_view>`. A `Tok::Input` and `Tok::Token_view` are aliases of `std::string_view`. Tokenizers are callable objects of the type `Tok::Token (Tok::Input&)`. Maps are callable objects of the type `void (Tok::Token_view)`. Currently `CT::string_view` is used instead in all three cases.
+`Tok::Token`s are an optionally populated type `std::optional<std::string_view>`. A `Tok::Input` and `Tok::Token_view` are aliases of `std::string_view`. Tokenizers are callable objects of the type `Tok::Token (Tok::Input&)`. Maps are callable objects of the type `void (Tok::Token_view)`.
 
-A tokenizer is called on an input. Depending on whether the tokenizer succeeded or failed, it returns a `Tok::Token` or `std::nullopt` respectively. Used this way, the tokenizer only validates the input. However, in order to do anything interesting with the matched tokens, the tokenizers expect a Map to be passed to them.
+A tokenizer is called on an input. Depending on whether the tokenizer succeeded or failed, it returns a `Tok::Token` or `std::nullopt` respectively. Used this way, the tokenizer only validates the input. However, in order to do anything interesting with the matched tokens, the tokenizers expect a Map type to be passed to them.
 
 For complete examples, look at the source files under `examples/`. Following is an example showing how to extract the content of a quoted string.
 ~~~.cpp
 std::string str;                  // Will hold the extracted string
 std::string input = "\"this is a string\"";
-Input input_view{input};
+Input input_view(input);
 
 // Construct a tokenizer to validate the input is a quoted string.
 // Here, a quoted string is defined as at least one instance of
 // any character (other than a double quote) between two double quotes.
 // Notice how Tok::at_least_one is being passed a Map in the form of a
-// lambda to extract the actual string without the quotes. 'get_string'
-// is assumed to be a routine that converts a Tok::Token_view into a
-// std::string.
+// lambda to extract the actual string without the quotes.
 const auto quoted_string_tokenizer =
     Tok::char_token('"') &
     Tok::at_least_one(
         Tok::none_of("\""),
-        [&str](Tok::Token_view token) {str = CT::get_string(token);}
+        [&str](Tok::Token_view token) {str = token;}
     ) &
     Tok::char_token('"');
 
@@ -132,7 +128,7 @@ The library can also be used to build simple parsers. For this case, it is advis
 ~~~.cpp
 std::string IP;                 // Will hold the extracted IP address
 std::string input = "\r\n+CGPADDR: 128.14.178.01\r\n";
-Tok::Input input_view{input};
+Tok::Input input_view(input);
 
 // Create a parser for the response of an AT command from a modem.
 // Here's the EBNF the following code replicates:
@@ -146,7 +142,7 @@ Tok::Input input_view{input};
 const auto ipv4_octet = Tok::at_least_one(Tok::digit());
 const auto ipv4_dotted_octet = Tok::char_token('.') & ipv4_octet;
 const auto ipv4_addr = Tok::map(ipv4_octet &  Tok::exactly(ipv4_dotted_octet, 3),
-    [&IP](Tok::Token_view token) { IP = CT::get_string(token); });
+    [&IP](Tok::Token_view token) { IP = token; });
 const auto guard = Tok::exactly(Tok::newline(), 2);
 const auto cmd_CGPADDR = Tok::str_token("+CGPADDR: ");
 const auto at_CGPADDR_cmd_parser = guard & cmd_CGPADDR & ipv4_addr & guard;

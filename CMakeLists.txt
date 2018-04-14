@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(LexTok VERSION 0.3.0 LANGUAGES CXX DESCRIPTION "A lexical tokenization header-only library")
+project(LexTok VERSION 0.4.0 LANGUAGES CXX DESCRIPTION "A lexical tokenization header-only library")
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(Doxygen REQUIRED dot)
