@@ -1,12 +1,11 @@
 /**
  * @file lextok.h
  * @author Nilangshu Bidyanta
+ * @version 0.4.0
  * @copyright (c) 2018 Nilangshu Bidyanta. MIT License.
  * @brief A lexical tokenization library that can potentially run at compile time.
  * @details This library provides a toolkit for building tokenizers. The tokenizers
- * work on `std::string_view` as input. For the time being, a custom implementation --
- * `CT::string_view`, is being used since parts of `std::string_view` cannot be evaluated
- * at compile time. In the future, this will be replaced by `std::string_view`.
+ * work on `std::string_view` as input.
  *
  * A tokenizer is a lambda with the type `Tok::Token (Tok::Input& input)`.
  */
@@ -18,7 +17,9 @@
 #include <tuple>
 #include <type_traits>
 
-#include "ct_lib.h"    // XXX: Only needed until std::string_view is constexpr enabled.
+#include <string_view>
+
+using namespace std::literals::string_view_literals;
 
 /**
  * @brief A helper macro to assert in case of invalid Map type.
@@ -48,13 +49,13 @@
 /// The main namespace for the lexical tokenization library
 namespace Tok {
 
-  using Input = CT::string_view;  /**< Define an input type. */
+  using Input = std::string_view;  /**< Define an input type. */
 
-  using Token = std::optional<CT::string_view>; /**< Define a type to optionally hold a token. */
+  using Token = std::optional<std::string_view>; /**< Define a type to optionally hold a token. */
 
-  using Token_view = CT::string_view; /**< Define a type that provides a view of the extracted token. */
+  using Token_view = std::string_view; /**< Define a type that provides a view of the extracted token. */
 
-  using Predicate = CT::string_view;  /**< Define a type that provides a view into characters that serve as predicates. */
+  using Predicate = std::string_view;  /**< Define a type that provides a view into characters that serve as predicates. */
 
   /// Private namespace that holds implementation details
   namespace impl {
@@ -78,12 +79,60 @@ namespace Tok {
         func = std::forward<Map>(func)](Input& input) -> Token {
           if (input.size() == 0 || !p(input[0]))
             return {};
-          const Token_view token{input, 1};
+          const Token_view token(input.substr(0, 1));
           func(token);
           input.remove_prefix(1);
           return {token};
         };
       }
+
+    /**
+     * @brief Compute the size of the largest token obtained by repeatedly applying `Tokenizer` on the input.
+     * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
+     * @param[in] tokenizer A callable object of type `Tokenizer`.
+     * @param[in] input The input to the tokenizer.
+     * @returns Size of the largest token obtained by repeatedly applying `Tokenizer` on the input.
+     */
+    template<typename Tokenizer>
+      constexpr std::size_t accumulation_size(Tokenizer&& tokenizer, Input input) noexcept
+      {
+        std::size_t sz = 0;
+        while (!input.empty()) {
+          const auto token = tokenizer(input);
+          if (!token)
+            return sz;
+          sz += (*token).size();
+        }
+        return sz;
+      }
+
+    /**
+     * @brief Check if a std::string_view starts with the contents of another std::string_view.
+     * @details This routine is in lieu of a C++20 feature where it is a member function
+     * of std::string_view.
+     * @param[in] target The target of the check.
+     * @param[in] value std::string_view that is supposed to be a sub-string.
+     * @retval true `value` is the start of the `target` std::string_view.
+     * @retval false `value` is not the start of the `target` std::string_view.
+     */
+    constexpr bool starts_with(const std::string_view& target, const std::string_view& value)
+    {
+      return target.size() >= value.size() && target.compare(0, value.size(), value) == 0;
+    }
+
+    /**
+     * @brief Check if a std::string_view starts with a given character.
+     * @details This routine is in lieu of a C++20 feature where it is a member function
+     * of std::string_view.
+     * @param[in] target The target of the check.
+     * @param[in] value Character to compare against.
+     * @retval true `value` is the start of the `target` std::string_view.
+     * @retval false `value` is not the start of the `target` std::string_view.
+     */
+    constexpr bool starts_with(const std::string_view& target, char value)
+    {
+      return target.size() >= 1 && target[0] == value;
+    }
   }
 
   /// Private namespace that lists default Maps
@@ -204,7 +253,7 @@ namespace Tok {
    * @brief Create a tokenizer that matches a newline character.
    * @tparam Map A callable type `void (Tok::Token_view)`. It is called on the extracted token.
    * @param[in] func A callable object of type `Map`.
-   * @returns A lambda that matches a newline character [\\r\\n] as a token.
+   * @returns A lambda that matches a newline characters [\\r\\n] as a token.
    */
   template<typename Map = decltype(mapper::none)>
     constexpr auto newline(Map&& func = mapper::none) noexcept
@@ -244,7 +293,7 @@ namespace Tok {
     {
       VALIDATE_MAP_TYPE(Map);
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
-        if (!input.starts_with(str))
+        if (!impl::starts_with(input, str))
           return {};
         func(str);
         input.remove_prefix(str.size());
@@ -265,8 +314,8 @@ namespace Tok {
       VALIDATE_MAP_TYPE(Map);
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
         for (const auto& c : char_group)
-          if (input.starts_with(c)) {
-            const Token_view token{input, 1};
+          if (impl::starts_with(input, c)) {
+            const Token_view token(input.substr(0, 1));
             func(token);
             input.remove_prefix(1);
             return {token};
@@ -287,37 +336,17 @@ namespace Tok {
     {
       VALIDATE_MAP_TYPE(Map);
       return [=, func = std::forward<Map>(func)](Input& input) -> Token {
+        if (input.size() == 0)
+          return {};
         for (const auto& c : char_group)
-          if (input.starts_with(c))
+          if (impl::starts_with(input, c))
             return {};
-        const Token_view token{input, 1};
+        const Token_view token(input.substr(0, 1));
         func(token);
         input.remove_prefix(1);
         return {token};
       };
     }
-
-  namespace impl {
-    /**
-     * @brief Compute the size of the largest token obtained by repeatedly applying `Tokenizer` on the input.
-     * @tparam Tokenizer A callable type `Tok::Token (Tok::Input& input)`.
-     * @param[in] tokenizer A callable object of type `Tokenizer`.
-     * @param[in] input The input to the tokenizer.
-     * @returns Size of the largest token obtained by repeatedly applying `Tokenizer` on the input.
-     */
-    template<typename Tokenizer>
-      constexpr std::size_t accumulation_size(Tokenizer&& tokenizer, Input input) noexcept
-      {
-        std::size_t sz = 0;
-        while (!input.empty()) {
-          const auto token = tokenizer(input);
-          if (!token)
-            return sz;
-          sz += (*token).size();
-        }
-        return sz;
-      }
-  }
 
   /**
    * @brief Create a tokenizer that matches multiple instances (zero or many) of another tokenizer.
@@ -335,7 +364,7 @@ namespace Tok {
       return [tokenizer = std::forward<Tokenizer>(tokenizer),
              func = std::forward<Map>(func)](Input& input) -> Token {
                const auto token_size = impl::accumulation_size(tokenizer, input);
-               const Token_view token{input, token_size};
+               const Token_view token(input.substr(0, token_size));
                func(token);
                input.remove_prefix(token_size);
                return {token};
@@ -366,7 +395,7 @@ namespace Tok {
                    return {};
                  token_size += (*token).size();
                }
-               const Token_view token{input_tokenize, token_size};
+               const Token_view token(input_tokenize.substr(0, token_size));
                func(token);
                return {token};
              };
@@ -392,7 +421,7 @@ namespace Tok {
                if (!first_token)
                  return {};
                std::size_t token_size_trailing = impl::accumulation_size(tokenizer, input);
-               const Token_view token{input_tokenize, token_size_trailing + (*first_token).size()};
+               const Token_view token(input_tokenize.substr(0, token_size_trailing + (*first_token).size()));
                func(token);
                input.remove_prefix(token_size_trailing);
                return {token};
@@ -480,7 +509,7 @@ constexpr auto operator&(TokenizerL&& tl, TokenizerR&& tr) noexcept
              input = input_tokenize;
              return {};
            }
-           return {{input_tokenize, (*tokenL).size() + (*tokenR).size()}};
+           return {input_tokenize.substr(0, (*tokenL).size() + (*tokenR).size())};
          };
 }
 
