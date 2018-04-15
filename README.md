@@ -14,7 +14,7 @@ The main motivation to write this in C++17 was personal -- it was to gain a bett
 The following prerequisites must be satisfied in order to use the library, build & run the tests, and generate documentation:
 * cmake (>= 3.10)
 * make
-* gcc (>=7.2) or a C++17 capable compiler
+* gcc (>=7.3) or a C++17 capable compiler
 * doxygen (>= 1.8.11)
 * dot
 

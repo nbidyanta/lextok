@@ -18,7 +18,7 @@
 int main()
 {
   std::string IP;                 // Will hold the extracted IP address
-  Tok::Input input_view("\r\n+CGPADDR: 128.14.178.01\r\n"sv);
+  Tok::Input input_view("\r\n+CGPADDR: 128.14.178.01\r\n");
 
   // Create a parser for the response of an AT command from a modem.
   // Here's the EBNF the following code replicates:

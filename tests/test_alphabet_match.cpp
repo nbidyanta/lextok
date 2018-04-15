@@ -7,15 +7,15 @@
 #include "lextok.h"
 
 static Tok::Input input[] = {
-  {},                             // Empty input
-  {"12-4"sv},                     // No matches
-  {"G"sv},                        // Normal match (upper case)
-  {"x"sv},                        // Normal match (lower case)
-  {"nB"sv},                       // Multiple matches (non-zero)
-  {"00"sv},                       // Multiple matches (zero)
-  {"f1"sv},                       // At least one match (positive)
-  {"19"sv},                       // At least one match (negative)
-  {"ThisIsACamelCaseSentence"sv}  // Count number of tokens matched
+  {},                           // Empty input
+  {"12-4"},                     // No matches
+  {"G"},                        // Normal match (upper case)
+  {"x"},                        // Normal match (lower case)
+  {"nB"},                       // Multiple matches (non-zero)
+  {"00"},                       // Multiple matches (zero)
+  {"f1"},                       // At least one match (positive)
+  {"19"},                       // At least one match (negative)
+  {"ThisIsACamelCaseSentence"}  // Count number of tokens matched
 };
 
 static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(Tok::Input);

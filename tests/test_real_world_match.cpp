@@ -7,10 +7,10 @@
 #include "lextok.h"
 
 static Tok::Input input[] = {
-  {"\r\n+CGPADDR: 128.14.178.01\r\n"sv},    // Extract IP address
-  {"\"quoted string\""sv},                  // Extract string without quotes
-  {"-33"sv},                                // Negative numbers
-  {"19C"sv},                                // Temperature
+  {"\r\n+CGPADDR: 128.14.178.01\r\n"},    // Extract IP address
+  {"\"quoted string\""},                  // Extract string without quotes
+  {"-33"},                                // Negative numbers
+  {"19C"},                                // Temperature
 };
 
 static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(Tok::Input);

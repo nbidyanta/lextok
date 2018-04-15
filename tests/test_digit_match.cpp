@@ -7,12 +7,12 @@
 #include "lextok.h"
 
 static Tok::Input input[] = {
-  {},                           // Empty input
-  {"Text"sv},                   // Mismatch
-  {"9"sv},                      // Regular match
-  {"1234567890"sv},             // Count number of tokens matched
-  {"AA535"sv},                  // Airline code
-  {"0xA22b3a"sv}                // Hexadecimal digits
+  {},                         // Empty input
+  {"Text"},                   // Mismatch
+  {"9"},                      // Regular match
+  {"1234567890"},             // Count number of tokens matched
+  {"AA535"},                  // Airline code
+  {"0xA22b3a"}                // Hexadecimal digits
 };
 
 static constexpr std::size_t number_of_tests = sizeof(input) / sizeof(Tok::Input);

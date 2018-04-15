@@ -19,8 +19,6 @@
 
 #include <string_view>
 
-using namespace std::literals::string_view_literals;
-
 /**
  * @brief A helper macro to assert in case of invalid Map type.
  */
