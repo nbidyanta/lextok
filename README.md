@@ -5,7 +5,7 @@ An experimental header-only C++ library that provides a toolkit to build lexical
 * [`constexpr std::string_view`](http://en.cppreference.com/w/cpp/string/basic_string_view)
 * [`constexpr std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple)
 * [`constexpr std::optional`](http://en.cppreference.com/w/cpp/utility/optional)
-* [`if` intializers](http://en.cppreference.com/w/cpp/language/if)
+* [`if` initializers](http://en.cppreference.com/w/cpp/language/if)
 
 The main motivation to write this in C++17 was personal -- it was to gain a better understanding of the latest C++ standard and to pull up my skills and mindset from the level of C. It should be possible to write something similar with older standards. However, it might be more verbose and possibly lack compile-time evaluation.
 
